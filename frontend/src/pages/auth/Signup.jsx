@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import "../../assets/Auth.css";
-import bgImage from "../../assets/bg-signup.jpg";
 import hirentLogo from "../../assets/hirent-logo.png";
+import bg from "../../assets/auth-bg.gif";
+
 import Footer from "../../components/Footer";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -21,28 +22,27 @@ const Signup = () => {
       return;
     }
     setError("");
-    navigate("/owner-information");
+    navigate("/onboarding1");
   };
 
-   return (
+  return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       <div
-        className="min-h-screen flex flex-col items-center justify-center relative"
+        className="min-h-screen w-full flex flex-col items-center justify-center relative"
         style={{
-          backgroundImage: `url(${bgImage})`,
-          backgroundPosition: "center",
+          backgroundImage: `url(${bg})`,
           backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-          backgroundColor: "white",
+          backgroundPosition: "center",
         }}
       >
+
         {/* Logo */}
         <div className="absolute top-6 left-6">
           <img src={hirentLogo} alt="Hirent Logo" className="w-24 h-auto mb-3" />
         </div>
 
         {/* Signup Form */}
-        <div className="z-20 bg-white w-full md:w-[350px] lg:w-[420px] h-[550px] rounded-lg shadow-lg p-10 flex flex-col justify-center hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="z-20 bg-white w-full md:w-[350px] lg:w-[420px] h-[540px] rounded-lg shadow-lg p-10 flex flex-col justify-center hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <h2 className="text-[24px] font-bold text-gray-900 mb-1 text-center">
             Create an account
           </h2>
@@ -59,7 +59,7 @@ const Signup = () => {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder=" "
-                className="block rounded-t-lg px-2.5 pb-2.5 pt-5 w-full text-[15px] text-gray-900 bg-gray-10 border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-[#bb84d6] peer"
+                className="block rounded-t-lg px-2.5 pb-2.5 pt-5 w-full text-[15px] text-gray-900 bg-white border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-[#bb84d6] peer"
               />
               <label
                 htmlFor="name"
@@ -79,7 +79,7 @@ const Signup = () => {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder=" "
-                className="block rounded-t-lg px-2.5 pb-2.5 pt-5 w-full text-[15px] text-gray-900 bg-gray-10 border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-[#bb84d6] peer"
+                className="block rounded-t-lg px-2.5 pb-2.5 pt-5 w-full text-[15px] text-gray-900 bg-white border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-[#bb84d6] peer"
               />
               <label
                 htmlFor="email"
@@ -99,7 +99,7 @@ const Signup = () => {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder=" "
-                className="block rounded-t-lg px-2.5 pb-2.5 pt-5 w-full text-[15px] text-gray-900 bg-gray-10 border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-[#bb84d6] peer"
+                className="block rounded-t-lg px-2.5 pb-2.5 pt-5 w-full text-[15px] text-gray-900 bg-white border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-[#bb84d6] peer"
               />
               <label
                 htmlFor="password"
@@ -112,10 +112,10 @@ const Signup = () => {
             </div>
 
             {/* Buttons */}
-            <div className="flex flex-col gap-3 mt-2">
+            <div className="flex flex-col gap-2 mt-2">
               <button
                 type="submit"
-                className="relative w-[95%] mx-auto bg-[#7A1CA9] text-white py-2.5 text-[15px] font-medium rounded-md overflow-hidden group transition-all duration-300 mt-5"
+                className="relative w-[95%] mx-auto bg-[#7A1CA9] text-white py-2.5 text-[15px] font-medium rounded-md overflow-hidden group transition-all duration-300 mt-2"
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-pink-700 to-purple-600 opacity-0 group-hover:opacity-100 translate-x-[-100%] group-hover:translate-x-[100%] transition-all duration-700 ease-in-out"></span>
                 <span className="absolute inset-0 bg-white opacity-20 rotate-45 translate-x-[-150%] group-hover:translate-x-[150%] blur-sm transition-transform duration-700 ease-in-out"></span>

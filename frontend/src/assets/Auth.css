@@ -1,13 +1,12 @@
-div[style*="background-image"] {
-  position: relative;
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden;
 }
 
-div[style*="background-image"]::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, rgba(99, 0, 177, 0.7), rgba(255, 0, 255, 0.4));
-  z-index: 0;
+div[style*="background-image"] {
+  position: relative;
 }
 
 .bg-white {
@@ -26,7 +25,7 @@ footer ul li:hover {
 
 /* Change autofill background to light purple */
 input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0px 1000px #f7f0ff inset !important; /* light purple background */
+  -webkit-box-shadow: 0 0 0px 1000px #f3f0fa inset !important; /* light purple background */
   -webkit-text-fill-color: #1a1a1a !important; /* text color */
   transition: background-color 5000s ease-in-out 0s;
 }
@@ -37,4 +36,3 @@ input:-webkit-autofill:hover {
   -webkit-box-shadow: 0 0 0px 1000px #f7f0ff inset !important;
   -webkit-text-fill-color: #1a1a1a !important;
 }
-
