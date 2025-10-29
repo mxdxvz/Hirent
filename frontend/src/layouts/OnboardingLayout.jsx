@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
 import { Outlet, useLocation } from "react-router-dom";
 import ProgressBar from "../components/ProgressBar";
 import Footer from "../components/Footer";
-import hirentLogoPurple from "../assets/hirent-logo-purple.png"; // ✅ make sure path is correct
+import hirentLogoPurple from "../assets/hirent-logo-purple.png"; 
 
 const OnboardingLayout = () => {
   const location = useLocation();
   const [step, setStep] = useState(1);
 
-  // Detect which onboarding step based on current route
   useEffect(() => {
     if (location.pathname.includes("onboarding1")) setStep(1);
     else if (location.pathname.includes("onboarding2")) setStep(2);
@@ -18,10 +18,9 @@ const OnboardingLayout = () => {
 
   return (
     <div className="onboarding-screen flex flex-col w-full">
-      {/* Onboarding section fills full viewport height */}
-      <div className="flex flex-col items-center justify-start w-full min-h-screen pt-16 pb-32">
-        {/* Logo above progress bar */}
-        <div className="mb-10 flex justify-center">
+      <div className="flex flex-col items-center justify-start w-full min-h-screen pt-16 pb-32 overflow-visible relative">
+
+        <div className="mt-6 mb-6 flex justify-center">
           <img
             src={hirentLogoPurple}
             alt="Hirent Logo"
@@ -29,18 +28,16 @@ const OnboardingLayout = () => {
           />
         </div>
 
-        {/* Progress bar */}
         <div className="pt-2 w-full">
           <ProgressBar step={step} />
         </div>
 
-        {/* Onboarding content */}
-        <div className="flex flex-col items-center justify-center relative z-10 onboarding-content-wrapper w-full">
+        <div className="flex flex-col items-center justify-center relative z-[9999] onboarding-content-wrapper w-full overflow-visible">
+
           <Outlet />
         </div>
       </div>
 
-      {/* Footer appears below onboarding content */}
       <Footer />
     </div>
   );

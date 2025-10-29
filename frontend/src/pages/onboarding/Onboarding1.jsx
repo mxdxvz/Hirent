@@ -10,7 +10,6 @@ import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { motion } from "framer-motion";
 
-// Fix marker icon issue in React-Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -18,7 +17,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-// Reverse geocoding
 const getAddressFromLatLng = async (lat, lng) => {
   const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`;
   try {
@@ -36,7 +34,6 @@ const getAddressFromLatLng = async (lat, lng) => {
   return "Address not found";
 };
 
-// Map picker
 const MapPicker = ({ setLocation }) => {
   const [position, setPosition] = useState(null);
 
@@ -65,7 +62,6 @@ const Onboarding1 = () => {
     location: "",
   });
 
-  // ✅ Smooth handleNext (progress is handled globally by layout)
   const handleNext = () => {
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
@@ -88,16 +84,15 @@ const Onboarding1 = () => {
       <div className="onboarding-inner flex flex-col items-center justify-center px-6 relative z-10">
         <div className="onboarding-content">
 
-          <h2 className="text-[28px] font-bold text-gray-900 mt-4 mb-2 text-center">
+          <h2 className="text-[28px] font-bold text-gray-900 mt-6 mb-2 text-center">
             Welcome to Hirent!
           </h2>
-          <p className="text-[15px] text-gray-600 mb-10 text-center whitespace-nowrap max-w-none">
+          <p className="text-[15px] text-gray-600 mb-8 text-center whitespace-nowrap max-w-none">
             Let’s personalize your experience to help you rent or list items faster.
           </p>
 
-          {/* Input Fields */}
+          {/* input groups */}
           <div className="input-group w-full max-w-[600px] mb-5">
-            {/* Purpose */}
             <div className="purpose-box">
               <label className={formData.purpose ? "active" : ""}>
                 What are you looking for today?
@@ -137,7 +132,6 @@ const Onboarding1 = () => {
               </div>
             </div>
 
-            {/* Location */}
             <div className="location-box">
               <label className={formData.location ? "active" : ""}>
                 Where are you located?
@@ -168,8 +162,10 @@ const Onboarding1 = () => {
               </div>
             </div>
 
-            {/* Industry */}
-            <div className="industry-box">
+            <div
+              className="industry-box"
+              style={{ display: openPurpose ? "none" : "block" }}
+            >
               <label className={industry ? "active" : ""}>
                 Which category are you most interested in?
               </label>
@@ -214,20 +210,22 @@ const Onboarding1 = () => {
                 )}
               </div>
             </div>
+
           </div>
 
-          {/* ✅ Next Button */}
           <button
             type="button"
             onClick={handleNext}
             className="relative w-[90%] mx-auto bg-[#7A1CA9] text-white py-3.5 text-[15px] font-medium rounded-md overflow-hidden group transition-all duration-300 hover:bg-[#65188a]"
           >
+            <span className="absolute inset-0 bg-gradient-to-r from-pink-700 to-purple-600 opacity-0 group-hover:opacity-100 translate-x-[-100%] group-hover:translate-x-[100%] transition-all duration-700 ease-in-out"></span>
+            <span className="absolute inset-0 bg-white opacity-20 rotate-45 translate-x-[-150%] group-hover:translate-x-[150%] blur-sm transition-transform duration-700 ease-in-out"></span>
             <span className="relative z-10">Next</span>
           </button>
         </div>
       </div>
 
-      {/* Map Popup */}
+      {/* map popup */}
       {mapOpen && (
         <div className="map-popup-overlay" onClick={() => setMapOpen(false)}>
           <div className="map-popup-card" onClick={(e) => e.stopPropagation()}>
