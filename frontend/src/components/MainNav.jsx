@@ -15,19 +15,18 @@ const MainNav = () => {
 
   return (
     <>
-      {/* ✅ Fixed Navbar */}
       <nav
         className="px-6 md:px-16 lg:px-24 fixed top-0 left-0 w-full z-50 shadow-sm"
         style={{ backgroundColor: "#7A1CA9", height: "55px" }}
       >
         <div className="flex items-center justify-between max-w-7xl mx-auto h-full">
 
-          {/* ✅ Logo */}
+          {/* Logo */}
           <div className="flex items-center h-full cursor-pointer" onClick={() => navigate("/")}>
             <img src={hirentLogo} alt="HiRENT" className="h-7" />
           </div>
 
-          {/* ✅ Navigation Links (highlight same as Navbar) */}
+          {/* Navigation Links */}
           <div className="hidden md:flex items-stretch h-full font-inter text-[13px]">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path;
@@ -35,11 +34,10 @@ const MainNav = () => {
                 <NavLink
                   key={link.name}
                   to={link.path}
-                  className={`flex items-center justify-center px-5 h-full transition-colors ${
-                    isActive
+                  className={`flex items-center justify-center px-5 h-full transition-colors ${isActive
                       ? "bg-[#59087f] text-white border-b-[4px] border-white"
                       : "text-white hover:bg-[#680e91]"
-                  }`}
+                    }`}
                   style={{
                     margin: 0,
                     paddingTop: 0,
@@ -51,17 +49,17 @@ const MainNav = () => {
               );
             })}
 
-            {/* ✅ “Be an Owner” special link */}
+            {/* “Be an Owner” */}
             <NavLink
               to="/seller"
-              className="flex items-center justify-center px-5 h-full font-semibold transition-colors"
+              className="flex items-center justify-center px-5 h-full transition-colors"
               style={{ color: "#FFFB83" }}
             >
-              Be an Owner
+              <span className="underline underline-offset-2 hover:decoration-yellow-400 hover:text-yellow-300 transition-all">Be an Owner</span>
             </NavLink>
           </div>
 
-          {/* ✅ Buttons (Login / Register) */}
+          {/* Buttons (Login / Register) */}
           <div className="flex items-center space-x-3">
             <button
               onClick={() => navigate("/login")}
@@ -79,8 +77,6 @@ const MainNav = () => {
           </div>
         </div>
       </nav>
-
-      {/* Spacer so content isn’t hidden */}
     </>
   );
 };

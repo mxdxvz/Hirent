@@ -27,7 +27,6 @@ const getAddressFromLatLng = async (lat, lng) => {
                 city,
                 town,
                 municipality,
-                village,
                 county,
                 province,
                 state,
@@ -35,7 +34,6 @@ const getAddressFromLatLng = async (lat, lng) => {
                 country,
             } = data.address;
 
-            // prioritize larger regional names (avoid too specific like barangay or road)
             const location =
                 city ||
                 town ||
@@ -77,6 +75,7 @@ const FilterSidebar = ({ onApplyFilters }) => {
     const [location, setLocation] = useState("");
     const [priceRange, setPriceRange] = useState([100, 5000]);
     const [priceRangeKey, setPriceRangeKey] = useState(0);
+    const [rating, setRating] = useState(null);
     const [resetTrigger, setResetTrigger] = useState(0);
 
     const categories = [
@@ -94,7 +93,6 @@ const FilterSidebar = ({ onApplyFilters }) => {
         "Outdoors",
     ];
 
-    // Drag-scroll logic for categories
     const scrollRef = useRef(null);
     const isDragging = useRef(false);
     const startX = useRef(0);
@@ -138,12 +136,14 @@ const FilterSidebar = ({ onApplyFilters }) => {
         setLocation("");
         setPriceRangeKey((prev) => prev + 1);
         setResetTrigger((prev) => prev + 1);
+        setRating(null);
         onApplyFilters({
             category: "",
             fromDate: null,
             toDate: null,
             location: "",
             price: null,
+            rating: null,
         });
     };
 
@@ -154,11 +154,12 @@ const FilterSidebar = ({ onApplyFilters }) => {
             toDate,
             location,
             priceRange,
+            rating
         });
     };
     return (
         <>
-            <aside className="w-80 bg-white shadow-md border border-gray-200 rounded-2xl h-[550px] flex flex-col">
+            <aside className="w-80 bg-white shadow-md border border-gray-200 rounded-2xl h-[830px] flex flex-col">
                 <div className="flex-1 overflow-y-auto px-6 pt-4 space-y-3 pb-0">
 
                     {/* Header */}
@@ -200,7 +201,15 @@ const FilterSidebar = ({ onApplyFilters }) => {
 
                     {/* Location */}
                     <div>
-                        <p className="font-light text-[14px] text-gray-700 mb-2">Location</p>
+                        <div className="flex justify-between items-center mb-2">
+                            <p className="font-light text-[14px] text-gray-700">Location</p>
+                            <button
+                                onClick={() => setLocation(null)}
+                                className="text-[#9129c5] text-[13px] hover:text-purple-400 transition"
+                            >
+                                Reset
+                            </button>
+                        </div>
                         <div
                             className={`w-full border border-gray-400 rounded-lg px-3 py-2 mb-5 text-[14px] cursor-pointer hover:bg-purple-50 transition ${location ? "text-gray-700" : "text-gray-400 opacity-70"
                                 }`}
@@ -209,6 +218,7 @@ const FilterSidebar = ({ onApplyFilters }) => {
                             {location || "Select location on map"}
                         </div>
                     </div>
+
 
                     {/* Date Range */}
                     <div>
@@ -223,7 +233,7 @@ const FilterSidebar = ({ onApplyFilters }) => {
                                     setToDate(dayjs());
                                     setResetTrigger((prev) => prev + 1);
                                 }}
-                                className="text-[#9129c5] text-[13px] mb-3 font-medium hover:text-purple-400 transition"
+                                className="text-[#9129c5] text-[13px] mb-3 hover:text-purple-400 transition"
                             >
                                 Reset
                             </button>
@@ -261,12 +271,12 @@ const FilterSidebar = ({ onApplyFilters }) => {
                     </div>
 
                     {/* Price Range */}
-                    <div className="mb-5 pb-6">
+                    <div className="pb-3">
                         <div className="flex justify-between items-center mb-2">
                             <p className="font-light text-[14px] text-gray-700">Price Range (per day)</p>
                             <button
                                 onClick={() => setPriceRangeKey((prev) => prev + 1)}
-                                className="text-[#9129c5] text-[13px] font-medium hover:text-purple-400 transition"
+                                className="text-[#9129c5] text-[13px] hover:text-purple-400 transition"
                             >
                                 Reset
                             </button>
@@ -278,10 +288,51 @@ const FilterSidebar = ({ onApplyFilters }) => {
                             />
                         </div>
                     </div>
+
+                    {/* Rating Filter */}
+                    <div className="pb-3">
+                        <div className="flex justify-between items-center mb-3">
+                            <p className="font-light text-[14px] text-gray-700">Rating</p>
+                            <button
+                                onClick={() => setRating(null)}
+                                className="text-[#9129c5] text-[13px] hover:text-purple-400 transition"
+                            >
+                                Reset
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col space-y-2 pointer-events-auto">
+                            {[5, 4, 3, 2, 1].map((r) => (
+                                <button
+                                    key={r}
+                                    onClick={() => setRating(r)}
+                                    className={`flex items-center gap-2 p-2 border rounded-lg hover:bg-gray-100 transition text-sm cursor-pointer ${rating === r ? "border-[#7A1CA9] bg-purple-50" : "border-gray-300"
+                                        }`}
+                                >
+                                    <div className="flex">
+                                        {Array.from({ length: 5 }).map((_, index) => (
+                                            <span
+                                                key={index}
+                                                className={`text-[16px] ${index < r ? "text-yellow-400" : "text-gray-300"
+                                                    }`}
+                                            >
+                                                ★
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <span className="text-[13px] text-gray-600">
+                                        {r === 5 ? "5.0 only" : `${r}.0 – ${r}.9`}
+                                    </span>
+
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                 </div>
 
                 {/* Apply Button */}
-                <div className="px-6 pb-4 mt-0 mb-3">
+                <div className="px-6 pb-5 mb-3">
                     <button
                         onClick={handleApply}
                         className="w-full bg-[#7A1CA9] hover:bg-[#681690] text-white rounded-lg py-2 text-[13px] font-normal transition"

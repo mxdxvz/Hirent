@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import "../../assets/Auth.css";
 import hirentLogo from "../../assets/hirent-logo-purple.png";
-import bg from "../../assets/auth-bg.gif";
+import bg from "../../assets/auth-bg.jpg";
 import Footer from "../../components/Footer";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
@@ -94,7 +94,6 @@ const AuthForm = ({ mode }) => {
         } else {
             console.log("Login data:", formData);
 
-            // ✅ Add this line to mark user as logged in
             login("fake_token_123"); // stores in localStorage + updates context state
 
             navigate("/browse"); // redirect to homepage after login
@@ -111,32 +110,29 @@ const AuthForm = ({ mode }) => {
                     backgroundPosition: "center",
                 }}
             >
-                {/* Centered main container */}
+                {/* Container */}
                 <div
-                    className={`z-10 bg-white w-[780px] max-w-[100%] ${mode === "signup" ? "h-[520px]" : "h-[480px]"
+                    className={`z-10 cursor-default bg-white ${mode === "signup" ? "w-[480px]  h-[650px]" : "w-[450px] h-[550px]"
                         } rounded-2xl shadow-2xl flex flex-row overflow-hidden hover:shadow-2xl hover:scale-[1.01] transition-all duration-300`}
                 >
 
 
-                    <div className="hidden md:flex w-1/2 items-center justify-center bg-white p-10 ml-3">
-                        <img
-                            src={require('../../assets/ecommerce-vector.png')}
-                            alt="Ecommerce Illustration"
-                            className="w-[150%] max-w-[360px]"
-                        />
-                    </div>
+                    {/* Login/Signup Form */}
+                    <div className="flex flex-col justify-center items-center w-full p-5">
+                        <div className="flex flex-col items-start justify-start ml-12 w-full">
+                            <img src={hirentLogo} alt="Hirent Logo" className="w-24 h-auto mb-6" />
+                        </div>
 
 
-                    {/* Right Side – Login/Signup Form */}
-                    <div className="flex flex-col justify-center items-center w-full md:w-1/2 p-8 -ml-6">
-                        <img src={hirentLogo} alt="Hirent Logo" className="w-24 h-auto mb-6" />
+                        <div className="w-full flex flex-col items-start ml-12">
+                            <h2 className="text-[23px] font-bold text-gray-800">
+                                {mode === "signup" ? "Get started with Hirent" : "Log In"}
+                            </h2>
 
-                        <h2 className="text-[21px] font-bold text-gray-900 mb-1 text-center">
-                            {mode === "signup" ? "Create an account" : "Log In to Hirent"}
-                        </h2>
-                        <p className="text-[13px] text-gray-600 mb-3 text-center">
-                            {mode === "signup" ? "Enter your details below" : "Enter your login details"}
-                        </p>
+                            <p className="text-[14.5px] font-medium text-gray-600 mb-4">
+                                {mode === "signup" ? "Sign up now and explore the platform" : "Continue to Hirent"}
+                            </p>
+                        </div>
 
                         <form className="space-y-2 w-[90%]" onSubmit={handleSubmit}>
                             {mode === "signup" && (
@@ -147,11 +143,11 @@ const AuthForm = ({ mode }) => {
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         placeholder=" "
-                                        className="block rounded-t-lg px-2 pb-2 pt-4 w-full text-[13px] text-gray-900 bg-white border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-[#bb84d6] peer"
+                                        className="block rounded-t-lg px-2 pb-2 pt-4 w-full text-[14px] text-gray-900 bg-white border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-[#bb84d6] peer"
                                     />
                                     <label
                                         htmlFor="name"
-                                        className="absolute text-[13px] duration-300 transform -translate-y-3 scale-75 top-2.5 z-10 origin-[0] left-1
+                                        className="absolute text-[14px] duration-300 transform -translate-y-3 scale-75 top-2.5 z-10 origin-[0] left-1
                     peer-placeholder-shown:translate-y-1.5 peer-placeholder-shown:scale-100 peer-placeholder-shown:text-gray-500
                     peer-focus:-translate-y-3 peer-focus:scale-90 peer-focus:text-[#bb84d6]"
                                     >
@@ -167,11 +163,11 @@ const AuthForm = ({ mode }) => {
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     placeholder=" "
-                                    className="block rounded-t-lg px-2 pb-2 pt-4 w-full text-[13px] text-gray-900 bg-white border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-[#bb84d6] peer"
+                                    className="block rounded-t-lg px-2 pb-2 pt-4 w-full text-[14px] text-gray-900 bg-white border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-[#bb84d6] peer"
                                 />
                                 <label
                                     htmlFor="email"
-                                    className="absolute text-[13px] duration-300 transform -translate-y-3 scale-75 top-2.5 z-10 origin-[0] left-1
+                                    className="absolute text-[14px] duration-300 transform -translate-y-3 scale-75 top-2.5 z-10 origin-[0] left-1
                   peer-placeholder-shown:translate-y-1.5 peer-placeholder-shown:scale-100 peer-placeholder-shown:text-gray-500
                   peer-focus:-translate-y-3 peer-focus:scale-90 peer-focus:text-[#bb84d6]"
                                 >
@@ -186,11 +182,11 @@ const AuthForm = ({ mode }) => {
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                     placeholder=" "
-                                    className="block rounded-t-lg px-2 pb-2 pt-4 w-full text-[13px] text-gray-900 bg-white border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-[#bb84d6] peer"
+                                    className="block rounded-t-lg px-2 pb-2 pt-4 w-full text-[14px] text-gray-900 bg-white border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-[#bb84d6] peer"
                                 />
                                 <label
                                     htmlFor="password"
-                                    className="absolute text-[13px] duration-300 transform -translate-y-3 scale-75 top-2.5 z-10 origin-[0] left-1
+                                    className="absolute text-[14px] duration-300 transform -translate-y-3 scale-75 top-2.5 z-10 origin-[0] left-1
                   peer-placeholder-shown:translate-y-1.5 peer-placeholder-shown:scale-100 peer-placeholder-shown:text-gray-500
                   peer-focus:-translate-y-3 peer-focus:scale-90 peer-focus:text-[#bb84d6]"
                                 >
@@ -212,20 +208,19 @@ const AuthForm = ({ mode }) => {
                             <div className="flex flex-col gap-2">
                                 <button
                                     type="submit"
-                                    className="relative w-full mx-auto bg-[#7A1CA9] text-white py-2.5 text-[13px] font-medium rounded-md overflow-hidden group transition-all duration-300 hover:bg-[#65188a] mt-2"
+                                    className="relative w-full mx-auto bg-[#7A1CA9] text-white py-3.5 text-[14px] font-medium rounded-md overflow-hidden group transition-all duration-300 hover:bg-[#65188a] mt-2"
                                 >
-                                    {/* Gradient swipe layer */}
                                     <span className="absolute inset-0 bg-gradient-to-r from-pink-700 to-purple-600 opacity-0 group-hover:opacity-100 translate-x-[-100%] group-hover:translate-x-[100%] transition-all duration-700 ease-in-out"></span>
                                     <span className="absolute inset-0 bg-white opacity-20 rotate-45 translate-x-[-150%] group-hover:translate-x-[150%] blur-sm transition-transform duration-700 ease-in-out"></span>
                                     <span className="relative z-10">
-                                        {mode === "signup" ? "Create Account" : "Log In"}
+                                        {"Continue with email"}
                                     </span>
                                 </button>
 
 
                                 <button
                                     type="button"
-                                    className="w-full mx-auto border border-gray-400 flex items-center justify-center gap-2 py-2.5 text-[13px] rounded-md text-gray-700 hover:text-[#9935cb] hover:border-[#9935cb] hover:bg-gray-10 transition-all"
+                                    className="w-full mx-auto border border-gray-400 flex items-center justify-center gap-2 py-3.5 text-[14px] rounded-md text-gray-700 hover:text-[#9935cb] hover:border-[#9935cb] hover:bg-gray-10 transition-all"
                                 >
                                     <img
                                         src="https://www.svgrepo.com/show/355037/google.svg"
@@ -237,15 +232,37 @@ const AuthForm = ({ mode }) => {
                             </div>
                         </form>
 
-                        <p className="text-[13px] text-gray-600 text-center mt-5">
+                        <p className="text-[12.5px] text-gray-600 text-center mt-5 mb-8">
                             {mode === "signup" ? "Already have an account?" : "Don’t have an account?"}{" "}
                             <Link
                                 to={mode === "signup" ? "/login" : "/signup"}
                                 className="text-[#862bb3] hover:underline font-medium"
                             >
-                                {mode === "signup" ? "Login" : "Signup"}
+                                {mode === "signup" ? "Login ➔" : "Signup ➔"}
                             </Link>
                         </p>
+
+                        {mode === "signup" && (
+                            <div className="w-full flex flex-col items-start ml-12">
+                                <p className="text-[12px] font-light text-gray-600 mb-3">
+                                    By proceeding, you agree to the{" "}
+                                    <span className="text-blue-600 hover:underline cursor-pointer">
+                                        Terms and Conditions
+                                    </span>{" "}
+                                    and
+                                    <br />
+                                    <span className="text-blue-600 hover:underline cursor-pointer">
+                                        Privacy Policy
+                                    </span>
+                                </p>
+                            </div>
+                        )}
+                        <div className={`w-full flex gap-3 text-[12px] text-gray-500 mt-4 ${mode === "login" ? "justify-center" : "justify-start ml-12"}`}>
+                            <span className="hover:underline cursor-pointer">Help</span>
+                            <span className="hover:underline cursor-pointer">Privacy</span>
+                            <span className="hover:underline cursor-pointer">Terms</span>
+                        </div>
+
                     </div>
                 </div>
             </div>

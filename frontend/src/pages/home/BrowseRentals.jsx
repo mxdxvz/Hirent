@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Heart, MapPin, Star, ShoppingCart } from "lucide-react";
+import { Heart, MapPin, Star, ShoppingCart, Check } from "lucide-react";
 import SortDropdown from "../../components/SortDropdown";
 import FilterSidebar from "../../components/FilterSidebar";
 import Navbar from "../../components/MainNav";
@@ -15,15 +15,27 @@ const BrowseRentals = () => {
     const [filters, setFilters] = useState({
         category: "",
         location: "",
-        priceRange: [100, 5000],
+        priceRange: [100, 1000],
         fromDate: null,
         toDate: null,
+        rating: null,
     });
     const [sortOption, setSortOption] = useState("Popular");
     const [loading, setLoading] = useState(true);
+    const [cartItems, setCartItems] = useState([]);
     const [wishlist, setWishlist] = useState([]);
 
-    // ✅ Toggle wishlist
+    const handleAddToCart = (itemId) => {
+        if (!cartItems.includes(itemId)) {
+            setCartItems((prev) => [...prev, itemId]);
+
+            setTimeout(() => {
+                setCartItems((prev) => prev.filter((id) => id !== itemId));
+            }, 2000);
+        }
+    };
+
+    // wishlist
     const toggleWishlist = (id) => {
         setWishlist((prev) =>
             prev.includes(id)
@@ -31,7 +43,8 @@ const BrowseRentals = () => {
                 : [...prev, id]
         );
     };
-    // ✅ Fetch rental listings (temporary local data)
+
+    // fetch rental listings
     useEffect(() => {
         setLoading(true);
         try {
@@ -45,22 +58,11 @@ const BrowseRentals = () => {
     }, []);
 
 
-    // ✅ Filtering + Sorting
+    // filtering + sorting
     useEffect(() => {
         let filtered = [...listings];
 
-        // Search filter
-        if (searchQuery.trim()) {
-            filtered = filtered.filter(
-                (item) =>
-                    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    item.tags?.some((tag) =>
-                        tag.toLowerCase().includes(searchQuery.toLowerCase())
-                    )
-            );
-        }
-
-        // Category filter
+        // category filter
         if (filters.category) {
             filtered = filtered.filter(
                 (item) =>
@@ -87,7 +89,18 @@ const BrowseRentals = () => {
             });
         }
 
-        // Availability filter (ignore default dayjs)
+        // rating filter 
+        if (filters.rating) {
+            const min = filters.rating;
+            const max = filters.rating + 0.9;
+
+            filtered = filtered.filter((item) => {
+                const rating = Number(item.rating);
+                return rating >= min && rating <= max;
+            });
+        }
+
+        // availability dates filter 
         if (
             filters.fromDate &&
             filters.toDate &&
@@ -114,7 +127,7 @@ const BrowseRentals = () => {
             });
         }
 
-        // ✅ Sorting logic
+        // sorting logic
         if (sortOption === "Lowest Price") {
             filtered.sort(
                 (a, b) =>
@@ -138,7 +151,7 @@ const BrowseRentals = () => {
         setFilteredListings(filtered);
     }, [filters, listings, searchQuery, sortOption]);
 
-    // ✅ Apply filters from sidebar
+    // apply filters
     const handleApplyFilters = (filterData) => {
         setFilters(filterData);
     };
@@ -159,6 +172,7 @@ const BrowseRentals = () => {
 
             {/* Content */}
             <div className="flex flex-1 overflow-hidden px-6 py-6 gap-6 bg-white">
+
                 {/* Filter Sidebar */}
                 <FilterSidebar onApplyFilters={handleApplyFilters} />
 
@@ -172,8 +186,6 @@ const BrowseRentals = () => {
                                 ({filteredListings.length})
                             </span>
                         </h2>
-
-                        {/* ✅ Sort Dropdown now works */}
                         <SortDropdown onSortChange={setSortOption} />
                     </div>
 
@@ -194,7 +206,6 @@ const BrowseRentals = () => {
                                     className="rounded-2xl shadow-sm hover:shadow-lg transition-all bg-white p-3"
                                 >
                                     <div className="relative bg-gray-100 aspect-square rounded-2xl flex flex-col items-center justify-center overflow-hidden">
-                                        {/* Top Right Icons */}
                                         <div className="absolute top-3 right-3 flex gap-1 z-50">
                                             <button
                                                 onClick={() => toggleWishlist(item.id)}
@@ -204,7 +215,7 @@ const BrowseRentals = () => {
                                                     size={18}
                                                     strokeWidth={1.5}
                                                     className={`transition ${wishlist.includes(item.id)
-                                                        ? "fill-[#f7115e] stroke-[#f7115e]"
+                                                        ? "fill-[#ec0b0b] stroke-[#ec0b0b]"
                                                         : "stroke-[#af50df]"
                                                         }`}
                                                 />
@@ -242,11 +253,32 @@ const BrowseRentals = () => {
                                             />
                                         </div>
 
-                                        {/* Add to Cart */}
-                                        <button className="bg-[#7A1CA9] hover:bg-[#681690] text-white text-[13px] py-2 w-full rounded-b-2xl transition flex justify-center items-center space-x-2">
-                                            <ShoppingCart size={16} className="text-white" strokeWidth={1.5} />
-                                            <span>Add To Cart</span>
-                                        </button>
+                                        {/* Add to Cart / Book Buttons */}
+                                        <div className="flex w-full rounded-b-2xl overflow-hidden">
+                                            <button className="flex-[0.9] bg-[#7A1CA9] hover:bg-[#681690] text-white text-[12.5px] font-medium py-3 flex justify-center items-center transition">
+                                                Book Item
+                                            </button>
+                                            <button
+                                                onClick={() => handleAddToCart(item.id)}
+                                                className={`flex-[1] border border-[#7A1CA9] rounded-br-2xl font-medium py-3 flex justify-center items-center gap-1 transition-all duration-300 text-[12.5px] ${cartItems.includes(item.id)
+                                                    ? "bg-green-500 border-green-500 text-white hover:bg-green-600 hover:border-green-600"
+                                                    : "text-[#7A1CA9] hover:bg-purple-100"
+                                                    }`}
+                                            >
+                                                {cartItems.includes(item.id) ? (
+                                                    <>
+                                                        <Check size={16} className="text-white" />
+                                                        Added
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <ShoppingCart size={16} className="text-[#7A1CA9]" />
+                                                        Add To Cart
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+
                                     </div>
 
                                     {/* Product Info */}
@@ -256,7 +288,7 @@ const BrowseRentals = () => {
                                                 {item.name}
                                             </p>
 
-                                            {/* Dynamic Rating */}
+                                            {/* Rating */}
                                             <div className="flex items-center text-yellow-500 text-xs">
                                                 {Array.from({ length: 5 }).map((_, index) => {
                                                     const starValue = index + 1;
