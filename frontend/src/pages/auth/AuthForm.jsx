@@ -6,6 +6,7 @@ import Footer from "../../components/Footer";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { generateFakeToken } from "../../utils/fakeAuth"; // adjust path if needed
 
 
 const AuthForm = ({ mode }) => {
@@ -96,10 +97,13 @@ const AuthForm = ({ mode }) => {
         } else {
             console.log("Login data:", formData);
 
-            login("fake_token_123"); // stores in localStorage + updates context state
+            // Use fake token with cart included
+            const fakeToken = generateFakeToken();
+            login(fakeToken); // stores in localStorage + updates context state
 
-            navigate("/browse"); // redirect to homepage after login
+            navigate("/browse"); // redirect to browse page after login
         }
+
     };
 
     return (
@@ -117,7 +121,7 @@ const AuthForm = ({ mode }) => {
                     className={`z-10 cursor-default bg-white ${mode === "signup" ? "w-[480px]  h-[650px]" : "w-[450px] h-[550px]"
                         } rounded-2xl shadow-2xl flex flex-row overflow-hidden hover:shadow-2xl hover:scale-[1.01] transition-all duration-300`}
                 >
-                    
+
                     {/* Login/Signup Form */}
                     <div className="flex flex-col justify-center items-center w-full p-5">
                         <div className="flex flex-col items-start justify-start ml-12 w-full">
@@ -202,7 +206,7 @@ const AuthForm = ({ mode }) => {
                                         className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-[#7A1CA9]"
                                         onClick={() => setShowPassword(!showPassword)}
                                     >
-                                        {showPassword ? <FiEyeOff size={20}/> : <FiEye size={20} />}
+                                        {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
                                     </span>
                                 )}
                             </div>

@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Heart, MapPin, Star, ShoppingCart, Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Heart, MapPin, Star, ShoppingCart, Check, Eye } from "lucide-react";
 import SortDropdown from "../../components/SortDropdown";
 import FilterSidebar from "../../components/FilterSidebar";
 import Navbar from "../../components/MainNav";
 import BannerCarousel from "../../components/BannerCarousel";
 import Footer from "../../components/Footer";
+import emptyListingsVector from "../../assets/empty-listings.png";
 import dayjs from "dayjs";
 import mockListings from "../../data/mockData";
+import { Base64 } from 'js-base64';
+import { getFakeUser, generateFakeToken } from '../../utils/fakeAuth';
 
 const BrowseRentals = () => {
+    const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState("");
     const [listings, setListings] = useState([]);
     const [filteredListings, setFilteredListings] = useState([]);
@@ -23,26 +28,78 @@ const BrowseRentals = () => {
     const [sortOption, setSortOption] = useState("Popular");
     const [loading, setLoading] = useState(true);
     const [cartItems, setCartItems] = useState([]);
+
+
+
+    useEffect(() => {
+        let user = getFakeUser();
+        if (!user) {
+            const token = generateFakeToken();
+            localStorage.setItem("fakeToken", token);
+            user = getFakeUser();
+        }
+
+        // Load user's cart from token
+        setCartItems(user.cart || []);
+    }, []);
     const [wishlist, setWishlist] = useState([]);
+    const [justAdded, setJustAdded] = useState([]);
 
-    const handleAddToCart = (itemId) => {
-        if (!cartItems.includes(itemId)) {
-            setCartItems((prev) => [...prev, itemId]);
 
+    const handleAddToCart = (item) => {
+        const existingCart = cartItems || [];
+
+        if (!existingCart.find((i) => i.id === item.id)) {
+            const newCartItem = {
+                ...item,
+                days: 1,
+                userEnteredCoupon: "",
+                couponMessage: "",
+                adjustedSubtotal: parseFloat(item.price.replace("₱", "").replace("/day", "")),
+                addedAt: new Date().toISOString(), // optional, helps sorting
+            };
+
+            const newCart = [...existingCart, newCartItem];
+            setCartItems(newCart);
+
+            // Update localStorage
+            localStorage.setItem("cartItems", JSON.stringify(newCart));
+
+            // Update fake user token
+            const user = getFakeUser();
+            const updatedUser = { ...user, cart: newCart };
+            const base64Payload = Base64.encode(JSON.stringify(updatedUser));
+            const newToken = `fakeHeader.${base64Payload}.fakeSignature`;
+            localStorage.setItem("fakeToken", newToken);
+
+            // Show temporary "Added" state
+            setJustAdded((prev) => [...prev, item.id]);
             setTimeout(() => {
-                setCartItems((prev) => prev.filter((id) => id !== itemId));
-            }, 2000);
+                setJustAdded((prev) => prev.filter((id) => id !== item.id));
+            }, 2000); // 2 seconds
         }
     };
 
     // wishlist
     const toggleWishlist = (id) => {
-        setWishlist((prev) =>
-            prev.includes(id)
+        let updatedWishlist = [];
+
+        setWishlist((prev) => {
+            updatedWishlist = prev.includes(id)
                 ? prev.filter((itemId) => itemId !== id)
-                : [...prev, id]
-        );
+                : [...prev, id];
+            return updatedWishlist;
+        });
+
+        const user = getFakeUser();
+        const updatedUser = { ...user, wishlist: updatedWishlist };
+        const base64Payload = Base64.encode(JSON.stringify(updatedUser));
+        const newToken = `fakeHeader.${base64Payload}.fakeSignature`;
+
+        localStorage.setItem("fakeToken", newToken);
     };
+
+
 
     // fetch rental listings
     useEffect(() => {
@@ -56,6 +113,14 @@ const BrowseRentals = () => {
             setLoading(false);
         }
     }, []);
+
+    useEffect(() => {
+        const user = getFakeUser();
+        if (user && user.wishlist) {
+            setWishlist(user.wishlist);
+        }
+    }, []);
+
 
 
     // filtering + sorting
@@ -164,11 +229,11 @@ const BrowseRentals = () => {
             {/* Banner */}
             <BannerCarousel />
 
-            <div className="mt-32"></div>  {/* mt-16 = 4rem / 64px */}
+            <div className="mt-32"></div>
 
 
             {/* Content */}
-            <div className="flex flex-1 overflow-hidden px-6 py-6 gap-6 bg-white">
+            <div className="flex flex-1 overflow-hidden px-6 py-6 gap-6 bg-[#fbfbfb]">
 
                 {/* Filter Sidebar */}
                 <FilterSidebar onApplyFilters={handleApplyFilters} />
@@ -192,8 +257,23 @@ const BrowseRentals = () => {
                             Loading listings...
                         </div>
                     ) : filteredListings.length === 0 ? (
-                        <div className="text-center text-gray-500 py-20">
-                            No items found.
+                        <div className="flex flex-col items-center justify-center py-10">
+                            {/* Empty image */}
+                            <img
+                                src={emptyListingsVector}
+                                alt="No Listings"
+                                className="w-72 h-72 mb-4 object-contain"
+                            />
+
+                            {/* Heading */}
+                            <h2 className="text-[20px] font-bold text-gray-600 mb-2">
+                                No Rentals Found
+                            </h2>
+
+                            {/* Description */}
+                            <p className="text-[14px] text-gray-400 mb-6 text-center max-w-sm">
+                                Sorry! We couldn't find any rentals matching your search or filters. Try adjusting your filters or search query.
+                            </p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-2 gap-y-4">
@@ -216,28 +296,14 @@ const BrowseRentals = () => {
                                                         : "stroke-[#af50df]"
                                                         }`}
                                                 />
+
                                             </button>
 
-                                            <button className="bg-white rounded-full shadow p-1 hover:bg-gray-200 transition">
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    strokeWidth={1.5}
-                                                    stroke="currentColor"
-                                                    className="w-5 h-5 text-gray-600"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
-                                                    />
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                                    />
-                                                </svg>
+                                            <button
+                                                onClick={() => window.location.href = `/product/${item.id}`}
+                                                className="bg-white rounded-full shadow p-1 hover:bg-gray-200 transition"
+                                            >
+                                                <Eye className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
                                             </button>
                                         </div>
 
@@ -252,28 +318,33 @@ const BrowseRentals = () => {
 
                                         {/* Add to Cart / Book Buttons */}
                                         <div className="flex w-full rounded-b-2xl overflow-hidden">
-                                            <button className="flex-[0.9] bg-[#7A1CA9] hover:bg-[#681690] text-white text-[12.5px] font-medium py-3 flex justify-center items-center transition">
+                                            <button
+                                                onClick={() => navigate(`/booking/${item.id}`)}
+                                                className="flex-[0.9] bg-[#7A1CA9] hover:bg-[#681690] text-white text-[12.5px] font-medium py-3 flex justify-center items-center transition"
+                                            >
                                                 Book Item
                                             </button>
+
                                             <button
-                                                onClick={() => handleAddToCart(item.id)}
-                                                className={`flex-[1] border border-[#7A1CA9] rounded-br-2xl font-medium py-3 flex justify-center items-center gap-1 transition-all duration-300 text-[12.5px] ${cartItems.includes(item.id)
+                                                onClick={() => handleAddToCart(item)}
+                                                className={`flex-[1] border border-[#7A1CA9] rounded-br-2xl font-medium py-3 flex justify-center items-center gap-1 transition-all duration-300 text-[12.5px] ${justAdded.includes(item.id)
                                                     ? "bg-green-500 border-green-500 text-white hover:bg-green-600 hover:border-green-600"
                                                     : "text-[#7A1CA9] hover:bg-purple-100"
                                                     }`}
                                             >
-                                                {cartItems.includes(item.id) ? (
+                                                {justAdded.includes(item.id) ? (
                                                     <>
-                                                        <Check size={16} className="text-white" />
-                                                        Added
+                                                        <Check size={16} className="text-white" /> Added!
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <ShoppingCart size={16} className="text-[#7A1CA9]" />
-                                                        Add To Cart
+                                                        <ShoppingCart size={16} className="text-[#7A1CA9]" /> Add To Cart
                                                     </>
                                                 )}
                                             </button>
+
+
+
                                         </div>
 
                                     </div>

@@ -8,14 +8,14 @@ const LogoutButton = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
-    // Reload same page so navbar re-renders as MainNav
-    window.location.reload();
+    // Redirect to login page
+    navigate("/login");
   };
 
   return (
     <button
       onClick={handleLogout}
-      className="px-4 py-1 bg-[#A936E3] text-white text-[13px] font-medium rounded hover:bg-[#8f1cc8] transition"
+      className="px-4 py-1 text-white text-[13px] border border-white rounded hover:bg-[#8f1cc8] transition"
     >
       Logout
     </button>

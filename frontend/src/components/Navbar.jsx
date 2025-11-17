@@ -1,9 +1,10 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Search, Heart, ShoppingCart, User } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import hirentLogo from "../assets/hirent-logo.png";
-import LogoutButton from "../components/LogoutButton"; // adjust the path
+import LogoutButton from "../components/LogoutButton";
+import { getFakeUser } from "../utils/fakeAuth";
 
 const Navbar = ({ onSearch }) => {
   const [inputValue, setInputValue] = useState("");
@@ -24,6 +25,17 @@ const Navbar = ({ onSearch }) => {
     { name: "How It Works", path: "/how-it-works" },
     { name: "About Us", path: "/about" },
   ];
+
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const user = getFakeUser();
+    if (user && user.cart) {
+      setCartCount(user.cart.length);
+    } else {
+      setCartCount(0);
+    }
+  }, []);
 
   return (
     <>
@@ -68,9 +80,9 @@ const Navbar = ({ onSearch }) => {
                     value={inputValue}
                     onChange={(e) => {
                       setInputValue(e.target.value);
-                      if (onSearch) onSearch(e.target.value); 
+                      if (onSearch) onSearch(e.target.value);
                     }}
-                    onKeyDown={handleKeyDown} 
+                    onKeyDown={handleKeyDown}
                     className="flex-1 outline-none text-[13px] bg-transparent placeholder-gray-400"
                   />
                   <Search
@@ -83,7 +95,19 @@ const Navbar = ({ onSearch }) => {
                 <div className="flex items-stretch space-x-1 h-full">
                   {[
                     { icon: <Heart className="w-5 h-5" />, path: "/wishlist" },
-                    { icon: <ShoppingCart className="w-5 h-5" />, path: "/cart" },
+                    {
+                      icon: (
+                        <div className="relative">
+                          <ShoppingCart className="w-5 h-5" />
+                          {cartCount > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                              {cartCount}
+                            </span>
+                          )}
+                        </div>
+                      ),
+                      path: "/cart",
+                    },
                     { icon: <User className="w-5 h-5" />, path: "/profile" },
                   ].map(({ icon, path }) => {
                     const isActive = location.pathname === path;
@@ -92,8 +116,8 @@ const Navbar = ({ onSearch }) => {
                         key={path}
                         to={path}
                         className={`flex items-center justify-center h-full w-[40px] transition-colors ${isActive
-                          ? "bg-[#59087f] text-white border-b-[4px] border-white"
-                          : "text-white hover:bg-[#680e91]"
+                            ? "bg-[#59087f] text-white border-b-[4px] border-white"
+                            : "text-white hover:bg-[#680e91]"
                           }`}
                         style={{ margin: 0, paddingTop: 0, paddingBottom: 0 }}
                       >

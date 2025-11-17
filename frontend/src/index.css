@@ -29,3 +29,18 @@ a:hover {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.cart-scale {
+    transform: scale(0.8);
+    transform-origin: top center;
+    width: 111%; /* Fix shrinking caused by scale(0.9) */
+}
+
+@media (min-width: 1024px) {
+    .cart-scale {
+        transform: scale(0.9);
+        transform-origin: top center;
+        width: 111%;
+    }
+}
+
