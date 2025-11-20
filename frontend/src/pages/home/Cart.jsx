@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Footer from "../../components/Footer";
 import emptyCart from "../../assets/empty-cart.png";
-import { User, Calendar, Truck, CircleCheckBig, Clock, Package } from "lucide-react";
+import { User, Calendar, Truck, CircleCheckBig, Clock, Package, MessageCircle, Pencil, CalendarPlus } from "lucide-react";
 import sampleUserCart from "../../data/sampleUserCart";
 import mockListings from "../../data/mockData";
 import { getFakeUser, generateFakeToken } from "../../utils/fakeAuth";
@@ -173,7 +173,7 @@ const CartPage = () => {
                                     </p>
                                     <button
                                         onClick={() => navigate("/browse")}
-                                        className="bg-white border border-[#7A1CA9] text-[#7A1CA9] px-3 py-2 text-sm rounded-lg shadow hover:bg-gray-50"
+                                        className="bg-white border border-[#7A1CA9] text-[#7A1CA9] px-3 py-1.5 text-sm rounded-lg shadow hover:bg-gray-50"
                                     >
                                         Go to Shop ➔
                                     </button>
@@ -226,10 +226,12 @@ const CartPage = () => {
                                                                     : item.status === "pending"
                                                                         ? "bg-yellow-200 text-yellow-800"
                                                                         : !item.bookedFrom && !item.bookedTo
-                                                                            ? "bg-gray-200 text-gray-800 mb-5"
+                                                                            ? "bg-gray-200 text-gray-800"
                                                                             : "bg-yellow-200 text-yellow-800"
                                                                     }`}
                                                             >
+
+
                                                                 {item.status === "approved" && <CircleCheckBig className="w-3 h-3" />}
                                                                 {item.status === "pending" && <Clock className="w-3 h-3" />}
                                                                 <span>
@@ -242,6 +244,17 @@ const CartPage = () => {
                                                                                 : "Pending"}
                                                                 </span>
                                                             </div>
+
+                                                            {/* Days Available (only for Not Booked Yet items) */}
+                                                            {(!item.bookedFrom && !item.bookedTo && item.status !== "approved" && item.status !== "pending") && (
+                                                                <div className="flex items-center gap-4 mt-2 text-gray-600 text-[13px]">
+                                                                    <Calendar className="w-4 h-4" />
+                                                                    <span>
+                                                                        {item.daysAvailable || item.days || item.availableDays || 0} days available
+                                                                    </span>
+                                                                </div>
+                                                            )}
+
 
                                                             {item.status !== "not-booked" && item.bookedFrom && item.bookedTo ? (
                                                                 <div className="flex items-center gap-4 mt-2 text-gray-600 text-[13px]">
@@ -276,22 +289,25 @@ const CartPage = () => {
                                                                 {item.status === "approved" ? (
                                                                     <button
                                                                         onClick={() => alert(`Contacting owner: ${item.owner}`)}
-                                                                        className="bg-purple-50 text-purple-700 text-[14px] px-3 py-1.5 border border-purple-400 rounded-lg hover:bg-purple-50 mt-1"
+                                                                        className="px-3 py-1.5 mt-2 text-sm border rounded-lg flex items-center gap-1 hover:bg-gray-50"
                                                                     >
-                                                                        Contact Owner
+                                                                        <MessageCircle className="w-4 h-4 mr-0.5" />
+                                                                        Message Owner
                                                                     </button>
                                                                 ) : item.status === "pending" ? (
                                                                     <button
                                                                         onClick={() => navigate(`/edit-booking/${item.id}`)}
-                                                                        className="bg-purple-50 text-purple-700 text-[14px] px-3 py-1.5 border border-purple-400 rounded-lg hover:bg-purple-50 mt-1"
+                                                                        className="px-3 py-1.5 mt-2  text-sm border rounded-lg flex items-center gap-1 hover:bg-gray-50"
                                                                     >
+                                                                        <Pencil className="w-4 h-4 mr-0.5" />
                                                                         Edit Booking Details
                                                                     </button>
                                                                 ) : (
                                                                     <button
                                                                         onClick={() => navigate(`/booking/${item.id}`)}
-                                                                        className="bg-purple-50 text-purple-700 text-[14px] px-3 py-1.5 border border-purple-400 rounded-lg hover:bg-purple-50 mt-1"
+                                                                        className="px-3 py-1.5 mt-2  text-sm border rounded-lg flex items-center gap-1 hover:bg-gray-50"
                                                                     >
+                                                                        <CalendarPlus className="w-4 h-4 mr-0.5" />
                                                                         Continue to Booking
                                                                     </button>
                                                                 )}

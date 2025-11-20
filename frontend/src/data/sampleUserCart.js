@@ -28,7 +28,7 @@ const sampleUserCart = [
     id: 3, // Electric Bike
     days: 2,
     shipping: 50,
-    status: "not booked",
+    status: "cancelled",
     bookedFrom: null,
     bookedTo: null,
   },
@@ -36,7 +36,7 @@ const sampleUserCart = [
     id: 4, // Drill Set
     days: 1,
     shipping: 30,
-    status: "available",
+    status: "cancelled",
     bookedFrom: null,
     bookedTo: null,
   },
@@ -60,7 +60,7 @@ const sampleUserCart = [
     id: 8, // Camping Tent
     days: 1,
     shipping: 30,
-    status: "not booked",
+    status: "cancelled",
     bookedFrom: null,
     bookedTo: null,
   },

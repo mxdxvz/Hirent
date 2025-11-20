@@ -164,7 +164,7 @@ const WishlistPage = () => {
 
                                         <button
                                             onClick={() => (window.location.href = "/browse")}
-                                            className="bg-white border border-[#7A1CA9] text-[#7A1CA9] px-3 py-2 text-sm rounded-lg shadow hover:bg-gray-50 transition"
+                                            className="bg-white border border-[#7A1CA9] text-[#7A1CA9] px-3 py-1.5 text-sm rounded-lg shadow hover:bg-gray-50 transition"
                                         >
                                             Browse Items ➔
                                         </button>
