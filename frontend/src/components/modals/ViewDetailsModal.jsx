@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { CalendarCheck, CalendarClock, MapPin, CreditCard, Package, Truck, DollarSign, CheckCircle2, Clock, Tag, Percent, ShieldAlert } from "lucide-react";
-import TruckIcon from "../../assets/delivery.png"; // adjust path if needed
+import TruckIcon from "../../assets/delivery.png";
 import DeliveryTrackingModal from "./DeliveryTrackingModal";
 import CancelConfirmationModal from "./CancelModal";
 import mockListings from "../../data/mockData";
@@ -36,7 +36,7 @@ export function ViewDetailsModal({ isOpen, onClose, itemId, rentalData }) {
 
     useEffect(() => {
         if (isOpen) {
-            setIconAnimated(true); // start animation when modal opens
+            setIconAnimated(true);
         } else {
             setIconAnimated(false);
         }
@@ -70,8 +70,8 @@ export function ViewDetailsModal({ isOpen, onClose, itemId, rentalData }) {
         estimatedDate: rental.delivery.estimatedDate,
         courier: rental.delivery.courier || "Courier Info N/A",
         steps,
-        confirmedAt: rental.delivery.confirmedAt,   // <--- add confirmed date
-        preparingAt: rental.delivery.preparingAt,   // <--- add preparing date
+        confirmedAt: rental.delivery.confirmedAt,
+        preparingAt: rental.delivery.preparingAt,
     } : null;
 
     return (
@@ -155,7 +155,7 @@ export function ViewDetailsModal({ isOpen, onClose, itemId, rentalData }) {
                                             {rental.delivery?.deliveryType === "shipping" ? "Shipping / Pickup Address" : "Pickup Location"}
                                         </p>
                                         <p className="text-gray-900 text-sm flex items-center gap-1">
-                                            {/* Origin: original item location */}
+                                            {/* Original item location */}
                                             {mockListings.find(l => l.id === rental.id)?.location || "Unknown"}
 
                                             {/* Truck icon */}
@@ -217,7 +217,7 @@ export function ViewDetailsModal({ isOpen, onClose, itemId, rentalData }) {
                                             ? rental.couponDiscount
                                             : listing?.couponDiscount || 0;
 
-                                    const securityDeposit = rental.securityDeposit || 0; // default to 0 if undefined
+                                    const securityDeposit = rental.securityDeposit || 0;
                                     const subtotal = pricePerDay * daysCount;
                                     const discountAmount = (subtotal * discountPercent) / 100;
                                     const total = subtotal - discountAmount + shippingFee + securityDeposit;
@@ -238,16 +238,15 @@ export function ViewDetailsModal({ isOpen, onClose, itemId, rentalData }) {
                                                 </span>
                                             </div>
 
-                                            {/* Discount (SHOW BADGE ONLY IF COUPON EXISTS) */}
+                                            {/* Discount */}
                                             <div className="flex justify-between items-center text-sm">
                                                 <div className="flex items-center gap-2">
-                                                    {/* Icon + Discount Label */}
+
                                                     <div className="flex items-center gap-2 text-green-500">
                                                         <Percent className="w-4 h-4 text-green-500" />
                                                         <span>Discount ({discountPercent}%)</span>
                                                     </div>
 
-                                                    {/* Coupon Badge */}
                                                     {discountPercent > 0 && (
                                                         <span className="flex items-center gap-1 px-1.5 py-0.5 text-[11px] rounded-lg bg-purple-100 text-purple-700">
                                                             <Tag className="w-3 h-3 text-[#7A1CA9]" />
@@ -261,8 +260,6 @@ export function ViewDetailsModal({ isOpen, onClose, itemId, rentalData }) {
                                                     -₱{discountAmount.toFixed(2)}
                                                 </span>
                                             </div>
-
-
 
                                             {/* Shipping*/}
                                             <div className="flex justify-between text-sm items-center">
@@ -288,7 +285,6 @@ export function ViewDetailsModal({ isOpen, onClose, itemId, rentalData }) {
                                                     <span className="text-yellow-600">₱{securityDeposit.toFixed(2)}</span>
                                                 </div>
                                             )}
-
 
                                             <hr className="border-t border-gray-200" />
 
@@ -330,7 +326,7 @@ export function ViewDetailsModal({ isOpen, onClose, itemId, rentalData }) {
 
                                                     {/* Pending items note */}
                                                     {rental.status === "pending" && step.key === "pending" && (
-                                                        <p className="text-orange-800 opacity-70 text-xs mt-1">Waiting for owner's approval.</p>
+                                                        <p className="text-orange-800 opacity-70 text-xs">Waiting for owner's approval.</p>
                                                     )}
                                                     {isCurrent && rental.delivery.estimatedDate && (
                                                         <div className="flex items-center gap-2 mt-1 text-gray-500 text-xs">
@@ -370,8 +366,8 @@ export function ViewDetailsModal({ isOpen, onClose, itemId, rentalData }) {
                             {rental.status !== "cancelled" && rental.status !== "approved" && (
                                 <button
                                     onClick={() => {
-                                        setSelectedId(rental.id); // store the current rental ID
-                                        setShowCancelModal(true);  // open cancel modal
+                                        setSelectedId(rental.id);
+                                        setShowCancelModal(true);
                                     }}
                                     className="flex-1 border border-red-300 text-red-600 font-medium text-[13px] py-1.5 rounded-lg"
                                 >
@@ -391,12 +387,11 @@ export function ViewDetailsModal({ isOpen, onClose, itemId, rentalData }) {
                                 isOpen={showCancelModal}
                                 onClose={() => setShowCancelModal(false)}
                                 onConfirm={() => {
-                                    // update rental status
                                     if (rental.id === selectedId) {
                                         rental.status = "cancelled";
                                     }
                                     setShowCancelModal(false);
-                                    onClose(); // optionally close the details modal
+                                    onClose();
                                 }}
                             />
                         </div>

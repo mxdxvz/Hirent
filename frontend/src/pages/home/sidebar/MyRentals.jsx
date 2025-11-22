@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import Sidebar from "../../../components/layouts/Sidebar";
 import Footer from "../../../components/layouts/Footer";
 import { useNavigate } from "react-router-dom";
-import { Calendar, MapPin, Eye, MessageCircle, CircleOff, CircleCheckBig, ClockFading } from "lucide-react";
+import { Calendar, CalendarPlus, MapPin, Eye, MessageCircle, CircleOff, BadgeCheck, CircleCheckBig, ClockFading } from "lucide-react";
 import mockListings from "../../../data/mockData";
 import sampleUserCart from "../../../data/sampleUserCart";
 import CancelConfirmationModal from "../../../components/modals/CancelModal";
 import { ViewDetailsModal } from "../../../components/modals/ViewDetailsModal";
+import SortDropdown from "../../../components/filters/SortDropdown";
 import { getFakeUser, generateFakeToken } from "../../../utils/fakeAuth";
 
 const MyRentalsPage = () => {
@@ -33,6 +34,7 @@ const MyRentalsPage = () => {
         }
 
         const cartData = user.cart?.length ? user.cart : sampleUserCart;
+
         const merged = cartData
             .map(r => {
                 const product = mockListings.find(p => p.id === r.id);
@@ -54,7 +56,6 @@ const MyRentalsPage = () => {
                                 ? "cancelled"
                                 : "pending",
                 };
-
             })
             .filter(Boolean);
 
@@ -63,12 +64,13 @@ const MyRentalsPage = () => {
         const approved = merged.filter(r => r.status === "approved").slice(0, 1);
         const pending = merged.filter(r => r.status === "pending").slice(0, 2);
         const cancelled = merged.filter(r => r.status === "cancelled").slice(0, 1);
+        const completed = merged.filter(r => r.status === "completed").slice(0, 1);
 
-        limited.push(...approved, ...pending, ...cancelled);
+        limited.push(...approved, ...pending, ...cancelled, ...completed);
 
         setRentals(limited);
-
     }, []);
+
 
     const handleCancel = (id) => {
         setRentals(prev =>
@@ -89,6 +91,7 @@ const MyRentalsPage = () => {
         if (filter === "approved") return r.status === "approved";
         if (filter === "pending") return r.status === "pending";
         if (filter === "cancelled") return r.status === "cancelled";
+        if (filter === "completed") return r.status === "completed";
 
         return true; // all
     });
@@ -154,14 +157,23 @@ const MyRentalsPage = () => {
                             Cancelled ({rentals.filter((r) => r.status === "cancelled").length})
                         </button>
 
+                        <button
+                            onClick={() => setFilter("completed")}
+                            className={`px-3 py-1 rounded-lg text-sm ${filter === "completed"
+                                ? "bg-[#7A1CA9] text-white"
+                                : "bg-gray-100 text-gray-800"
+                                }`}>
+                            Completed ({rentals.filter((r) => r.status === "completed").length})
+                        </button>
 
-                        <select
-                            value={sortOrder}
-                            onChange={(e) => setSortOrder(e.target.value)}
-                            className="ml-auto px-3 py-2 text-sm border rounded-lg bg-white">
-                            <option value="latest">Newest</option>
-                            <option value="oldest">Oldest</option>
-                        </select>
+
+                        {/* SORT DROPDOWN */}
+                        <div className="ml-auto">
+                            <SortDropdown
+                                options={["Latest", "Oldest"]}
+                                onSortChange={(value) => setSortOrder(value.toLowerCase())}
+                            />
+                        </div>
                     </div>
 
                     {/* EMPTY STATE */}
@@ -178,23 +190,24 @@ const MyRentalsPage = () => {
                                 className="relative bg-white border rounded-2xl p-6 shadow-sm hover:shadow-md transition"
                             >
                                 <span
-                                    className={`absolute top-4 right-4 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${item.status === "approved"
+                                    className={`absolute top-4 right-4 px-2 py-1 rounded-full text-[12.5px] font-medium flex items-center gap-1 ${item.status === "approved"
                                         ? "bg-purple-100 text-purple-700"
                                         : item.status === "pending"
                                             ? "bg-yellow-100 text-yellow-700"
-                                            : "bg-red-100 text-red-700"
+                                            : item.status === "cancelled"
+                                                ? "bg-red-100 text-red-700"
+                                                : "bg-green-100 text-green-700"
                                         }`}
                                 >
-                                    {item.status === "approved" && <CircleCheckBig className="w-3 h-3" />}
-                                    {item.status === "pending" && <ClockFading className="w-3 h-3" />}
-                                    {item.status === "cancelled" && <CircleOff className="w-3 h-3" />}
+                                    {item.status === "approved" && <BadgeCheck className="w-4 h-4" />}
+                                    {item.status === "pending" && <ClockFading className="w-4 h-4" />}
+                                    {item.status === "cancelled" && <CircleOff className="w-4 h-4" />}
+                                    {item.status === "completed" && <CircleCheckBig className="w-4 h-4" />}
 
                                     {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                                 </span>
 
-
                                 <div className="flex gap-5">
-                                    {/* Gray background wrapper */}
                                     <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center">
                                         <img
                                             src={item.image}
@@ -214,7 +227,6 @@ const MyRentalsPage = () => {
                                         <p className="text-sm text-gray-600">Listed by {item.owner}</p>
 
                                         <div className="mt-3 mb-3 flex items-center gap-20 text-sm text-gray-800">
-                                            {/* Booked Dates */}
                                             <div className="flex flex-col gap-1">
                                                 <div className="flex items-center gap-1">
                                                     <Calendar className="w-4 h-4 mr-1 opacity-60" />
@@ -235,7 +247,6 @@ const MyRentalsPage = () => {
                                                         : "-"}
                                                 </div>
 
-                                                {/* Rental Duration */}
                                                 {item.bookedFrom && item.bookedTo && (
                                                     <div className="flex items-center gap-1 text-gray-600">
                                                         <ClockFading className="w-4 h-4 mr-1 opacity-65" />
@@ -252,30 +263,22 @@ const MyRentalsPage = () => {
                                                         })()}
                                                     </div>
                                                 )}
-
                                             </div>
 
-                                            {/* Location (from listing) */}
                                             <div className="flex items-center gap-1">
                                                 <MapPin className="w-4 h-4 mr-1 opacity-60" />
-                                                {
-                                                    mockListings.find(l => l.id === item.id)?.location || "Unknown"
-                                                }
+                                                {mockListings.find(l => l.id === item.id)?.location || "Unknown"}
                                             </div>
-
                                         </div>
 
-
+                                        {/* PRICE INFO */}
                                         <div className="mt-5 flex items-center justify-between">
-                                            {/* LEFT: PRICE INFO */}
                                             <div className="flex items-center gap-12">
-                                                {/* Rent per day - always show */}
                                                 <div>
                                                     <p className="text-sm text-gray-500">Rent per day</p>
                                                     <p className="font-medium text-[18px] text-gray-800">₱{item.price}</p>
                                                 </div>
 
-                                                {/* Total amount - hide only for cancelled items */}
                                                 {item.status !== "cancelled" && (
                                                     <div>
                                                         <p className="text-sm text-gray-500">Total amount</p>
@@ -285,7 +288,6 @@ const MyRentalsPage = () => {
                                                                 const pricePerDay = listing
                                                                     ? Number((listing.price || "₱0").toString().replace(/[^\d.]/g, ""))
                                                                     : 0;
-
                                                                 let daysCount = item.days || 1;
                                                                 if (item.bookedFrom && item.bookedTo) {
                                                                     const from = new Date(item.bookedFrom);
@@ -294,21 +296,17 @@ const MyRentalsPage = () => {
                                                                     const diff = Math.floor((to - from) / msPerDay) + 1;
                                                                     daysCount = diff > 0 ? diff : daysCount;
                                                                 }
-
                                                                 const shippingFee = typeof item.shipping === "number"
                                                                     ? item.shipping
                                                                     : listing?.shipping || 0;
-
                                                                 const discountPercent =
                                                                     typeof item.couponDiscount === "number"
                                                                         ? item.couponDiscount
                                                                         : listing?.couponDiscount || 0;
-
                                                                 const securityDeposit = item.securityDeposit || 0;
                                                                 const subtotal = pricePerDay * daysCount;
                                                                 const discountAmount = (subtotal * discountPercent) / 100;
                                                                 const total = subtotal - discountAmount + shippingFee + securityDeposit;
-
 
                                                                 return `₱${total.toFixed(2)}`;
                                                             })()}
@@ -317,12 +315,11 @@ const MyRentalsPage = () => {
                                                 )}
                                             </div>
                                         </div>
-
                                     </div>
-
                                 </div>
-                                <div className="flex items-center gap-2 justify-end w-full">
-                                    {/* APPROVED & PENDING ITEMS */}
+
+                                {/* BUTTONS */}
+                                <div className="flex items-center gap-2 justify-end w-full mt-3">
                                     {(item.status === "approved" || item.status === "pending") && (
                                         <>
                                             <button
@@ -343,21 +340,35 @@ const MyRentalsPage = () => {
                                         </>
                                     )}
 
-                                    {/* CANCELLED ITEMS */}
                                     {item.status === "cancelled" && (
                                         <button
-                                            onClick={() => {
-                                                setRentals(prev => prev.filter(r => r.id !== item.id));
-                                            }}
+                                            onClick={() => setRentals(prev => prev.filter(r => r.id !== item.id))}
                                             className="px-3 py-1.5 text-sm border rounded-lg text-red-500 border-red-300 bg-red-50 hover:bg-red-100"
                                         >
                                             Remove
                                         </button>
                                     )}
-                                </div>
 
+                                    {item.status === "completed" && (
+                                        <>
+                                            <button
+                                                onClick={() => alert(`Re-renting ${item.name}`)}
+                                                className="px-3 py-1.5 text-sm border rounded-lg font-medium flex items-center gap-1 hover:bg-gray-50"
+                                            >
+                                                <CalendarPlus className="w-4 h-4 mr-1" />
+                                                Book Again
+                                            </button>
+
+                                            <button className="px-3 py-1.5 text-sm border rounded-lg font-medium flex items-center gap-1 hover:bg-gray-50">
+                                                <MessageCircle className="w-4 h-4 mr-1" />
+                                                Message Owner
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         ))}
+
                     </div>
 
                 </div>
@@ -370,8 +381,8 @@ const MyRentalsPage = () => {
             <ViewDetailsModal
                 isOpen={detailsModalOpen}
                 onClose={() => setDetailsModalOpen(false)}
-                rentalData={rentals} // pass all rentals
-                itemId={selectedRentalId} // modal will pick the correct item internally
+                rentalData={rentals}
+                itemId={selectedRentalId}
             />
             <Footer />
         </div>

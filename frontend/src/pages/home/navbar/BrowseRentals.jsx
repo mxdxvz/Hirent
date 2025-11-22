@@ -56,7 +56,7 @@ const BrowseRentals = () => {
                 userEnteredCoupon: "",
                 couponMessage: "",
                 adjustedSubtotal: parseFloat(item.price.replace("₱", "").replace("/day", "")),
-                addedAt: new Date().toISOString(), // optional, helps sorting
+                addedAt: new Date().toISOString(),
             };
 
             const newCart = [...existingCart, newCartItem];
@@ -231,7 +231,6 @@ const BrowseRentals = () => {
 
             <div className="mt-32"></div>
 
-
             {/* Content */}
             <div className=" flex flex-1 overflow-hidden px-6 py-6 gap-6 bg-[#fbfbfb]">
 
@@ -343,10 +342,7 @@ const BrowseRentals = () => {
                                                 )}
                                             </button>
 
-
-
                                         </div>
-
                                     </div>
 
                                     {/* Product Info */}

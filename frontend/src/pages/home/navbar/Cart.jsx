@@ -5,6 +5,7 @@ import Footer from "../../../components/layouts/Footer";
 import emptyCart from "../../../assets/empty-cart.png";
 import { User, Calendar, Truck, CircleCheckBig, Clock, Package, MessageCircle, Pencil, CalendarPlus, ShieldAlert } from "lucide-react";
 import sampleUserCart from "../../../data/sampleUserCart";
+import SortDropdown from "../../../components/filters/SortDropdown";
 import CancelConfirmationModal from "../../../components/modals/CancelModal";
 import mockListings from "../../../data/mockData";
 import { getFakeUser, generateFakeToken } from "../../../utils/fakeAuth";
@@ -112,8 +113,6 @@ const CartPage = () => {
         return { subtotal, discountAmount, shippingFee, total, daysCount, pricePerDay };
     };
 
-
-
     // Overall cart totals
     const cartTotals = cartItems.reduce(
         (acc, item) => {
@@ -126,9 +125,6 @@ const CartPage = () => {
         },
         { subtotal: 0, shipping: 0, discount: 0, total: 0 }
     );
-
-
-
 
     const [filter, setFilter] = useState("all"); // "all", "approved", "pending"
 
@@ -157,8 +153,6 @@ const CartPage = () => {
         setSelectedCancelId(null);
         alert("Booking canceled successfully.");
     };
-
-
 
     // Filtered items based on selected tab
     const filteredItems = cartItems.filter(item => {
@@ -198,15 +192,12 @@ const CartPage = () => {
 
     // Final total including discount
     const approvedGrandTotal = approvedTotals.subtotal + approvedTotals.shipping - approvedTotals.discount;
-
-    // ✅ Add these here so they are available in JSX
     const approvedSecurityDepositTotal = approvedItems.reduce(
         (acc, item) => acc + (item.securityDeposit || 0),
         0
     );
 
     const approvedGrandTotalWithDeposit = approvedGrandTotal + approvedSecurityDepositTotal;
-
 
     return (
         <div className="flex flex-col min-h-screen bg-[#fbfbfb]">
@@ -242,17 +233,13 @@ const CartPage = () => {
                                 </button>
                             </div>
 
-                            {/* Sort Dropdown */}
                             <div className="ml-auto">
-                                <select
-                                    value={sortOrder}
-                                    onChange={(e) => setSortOrder(e.target.value)}
-                                    className="px-3 py-2 text-sm border rounded-lg bg-white"
-                                >
-                                    <option className="text-[13px]" value="latest">Latest - Oldest</option>
-                                    <option className="text-[13px]" value="oldest">Oldest - Latest</option>
-                                </select>
+                                <SortDropdown
+                                    options={["Latest", "Oldest"]}
+                                    onSortChange={(value) => setSortOrder(value.toLowerCase())}
+                                />
                             </div>
+
                         </div>
 
                         <div className="flex flex-col md:flex-row gap-5">
@@ -283,7 +270,6 @@ const CartPage = () => {
                                         )}
                                         {sortedItems.map(item => (
                                             <div key={item.id} className="relative bg-white p-4 border rounded-xl shadow-sm hover:shadow-md">
-                                                {/* Conditional Action */}
                                                 {item.status === "approved" || item.status === "pending" ? (
                                                     <button
                                                         onClick={() => openCancelModal(item.id)}

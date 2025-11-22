@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 
-const SortDropdown = ({ onSortChange }) => {
-  const [selected, setSelected] = useState("Popular");
+const SortDropdown = ({ onSortChange, options = ["Popular", "Newest", "Lowest Price", "Highest Price"] }) => {
+  const [selected, setSelected] = useState(options[0]);
   const textRef = useRef(null);
   const selectRef = useRef(null);
 
@@ -26,7 +26,7 @@ const SortDropdown = ({ onSortChange }) => {
   };
 
   return (
-    <div className="flex items-center border border-gray-400 rounded-lg px-0.5 py-1.5 text-sm text-gray-400">
+    <div className="flex items-center border border-gray-400 rounded-lg px-0.5 py-1.5 text-sm text-gray-400 relative">
       {/* Icon */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -54,10 +54,11 @@ const SortDropdown = ({ onSortChange }) => {
         onKeyDown={handleKeyDown}
         className="bg-transparent text-[13px] focus:outline-none text-[#7A1CA9] font-light cursor-pointer appearance-none border-none p-0 m-0 leading-tight"
       >
-        <option value="Popular">Popular</option>
-        <option value="Newest">Newest</option>
-        <option value="Lowest Price">Lowest Price</option>
-        <option value="Highest Price">Highest Price</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
       </select>
 
       {/* Hidden span for dynamic width */}

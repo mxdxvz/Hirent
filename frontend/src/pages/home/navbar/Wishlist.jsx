@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { MapPin, Calendar, ShoppingCart } from "lucide-react";
 import Footer from "../../../components/layouts/Footer";
 import Sidebar from "../../../components/layouts/Sidebar";
+import SortDropdown from "../../../components/filters/SortDropdown";
 import emptyWishlist from "../../../assets/empty-wishlist.png";
 import emptyItems from "../../../assets/empty-listings.png";
 import mockListings from "../../../data/mockData";
@@ -127,18 +128,10 @@ const WishlistPage = () => {
 
                             {/* SORT DROPDOWN */}
                             <div className="ml-auto">
-                                <select
-                                    value={sortOrder}
-                                    onChange={(e) => setSortOrder(e.target.value)}
-                                    className="px-3 py-2 text-sm border rounded-lg bg-white"
-                                >
-                                    <option className="text-[13px]" value="latest">
-                                        Latest - Oldest
-                                    </option>
-                                    <option className="text-[13px]" value="oldest">
-                                        Oldest - Latest
-                                    </option>
-                                </select>
+                                <SortDropdown
+                                    options={["Latest", "Oldest"]}
+                                    onSortChange={(value) => setSortOrder(value.toLowerCase())}
+                                />
                             </div>
                         </div>
 
@@ -187,16 +180,12 @@ const WishlistPage = () => {
                                                 Remove
                                             </button>
 
-                                            {/* Image */}
                                             <div className="relative w-full h-56 mx-auto rounded-xl flex items-center justify-center overflow-hidden bg-white">
 
                                                 <img
                                                     src={item.image}
                                                     className="max-h-full max-w-full object-contain transition-all duration-300 hover:scale-105"
                                                 />
-
-
-
                                                 {item.featured && (
                                                     <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs px-3 py-1 rounded-full">
                                                         Featured
@@ -209,7 +198,6 @@ const WishlistPage = () => {
                                                 )}
                                             </div>
 
-                                            {/* Details */}
                                             <div>
                                                 <h3 className="font-semibold text-[16px] mb-1">{item.name}</h3>
                                                 <p className="text-sm text-gray-500 mb-2">by {item.owner}</p>
@@ -229,11 +217,11 @@ const WishlistPage = () => {
                                                     <span className="text-sm text-gray-600"></span>
                                                 </p>
 
-                                               <button className="w-full bg-[#7A1CA9] px-3 py-2 text-sm text-white border rounded-lg 
+                                                <button className="w-full bg-[#7A1CA9] px-3 py-2 text-sm text-white border rounded-lg 
     hover:bg-purple-700 transition flex items-center justify-center gap-2">
-    <ShoppingCart className="w-4 h-4" />
-    Add to Cart
-</button>
+                                                    <ShoppingCart className="w-4 h-4" />
+                                                    Add to Cart
+                                                </button>
 
                                             </div>
                                         </div>

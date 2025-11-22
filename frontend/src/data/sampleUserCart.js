@@ -76,7 +76,7 @@ const sampleUserCart = [
     id: 3, // Electric Bike
     days: 2,
     shipping: 50,
-    status: "cancelled",
+    status: "completed",
     bookedFrom: null,
     bookedTo: null,
     dateBooked: null,
