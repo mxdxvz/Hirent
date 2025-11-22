@@ -4,10 +4,12 @@ import Signup from "./pages/auth/Signup";
 import Login from "./pages/auth/Login";
 import OwnerSignup from "./pages/auth/OwnerSignup";
 import OwnerSetup from "./pages/auth/OwnerSetup";
+import AboutPage from './pages/AboutPage';
 import BrowseRentals from "./pages/home/navbar/BrowseRentals";
 import ProductDetails from './pages/ProductDetails';
 import Cart from "./pages/home/navbar/Cart";
 import Wishlist from "./pages/home/navbar/Wishlist";
+
 import MyRentals from "./pages/home/sidebar/MyRentals";
 import MainLayout from "./components/layouts/MainLayout";
 import "leaflet/dist/leaflet.css";
@@ -30,8 +32,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/ownersignup" element={<OwnerSignup/>} />
           <Route path="/ownersetup" element={<OwnerSetup />} />
-
+          
           <Route element={<MainLayout />}>
+          <Route path="/about" element={<AboutPage />} />
             <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/browse" element={<BrowseRentals />} />
             <Route path="/about" element={<div></div>} />
@@ -44,6 +47,6 @@ function App() {
       </Router>
     </AuthProvider>
   );
-}
+};
 
 export default App;
