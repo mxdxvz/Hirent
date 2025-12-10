@@ -7,16 +7,12 @@ import AddNewItemForm from "../../components/forms/AddNewItemForm";
 export default function AddItem() {
   const navigate = useNavigate();
 
-  const handleSubmit = async (formData, images) => {
-    console.log("Form Data:", formData);
-    console.log("Images:", images);
-
-    // TODO: Add your API call here to submit the new item
-    navigate("/ownerdashboard");
+  const handleCancel = () => {
+    navigate("/owner/dashboard");
   };
 
-  const handleCancel = () => {
-    navigate("/ownerdashboard");
+  const handleSuccess = () => {
+    navigate("/owner/dashboard");
   };
 
   return (
@@ -25,7 +21,7 @@ export default function AddItem() {
       <Sidebar />
 
       {/* Main Content */}
-      <AddNewItemForm onSubmit={handleSubmit} onCancel={handleCancel} />
+      <AddNewItemForm onCancel={handleCancel} onSuccess={handleSuccess} />
     </div>
   );
 }

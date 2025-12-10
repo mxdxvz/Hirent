@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import OwnerSidebar from "../../components/layouts/OwnerSidebar";
 import { makeAPICall, ENDPOINTS } from "../../config/api";
 
@@ -12,28 +13,35 @@ import ItemActionsMenu from "../../components/listings/ItemActionsMenu";
 
 // Fetch owner listings from backend
 const MyListings = () => {
+  const { user } = React.useContext(require("../../context/AuthContext").AuthContext);
+  const location = useLocation();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(null);
 
-  // Fetch owner items from backend
+  // Function to fetch listings
+  const fetchListings = React.useCallback(async () => {
+    if (!user?.id) return;
+    
+    setLoading(true);
+    setError(null);
+    try {
+      // Fetch only items owned by the logged-in user
+      const data = await makeAPICall(ENDPOINTS.ITEMS.BY_OWNER(user.id));
+      setListings(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error fetching listings:", err);
+      setError("Failed to load listings");
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  // Fetch owner items from backend - refetch when location changes
   useEffect(() => {
-    const fetchListings = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await makeAPICall(ENDPOINTS.ITEMS.GET_ALL);
-        setListings(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Error fetching listings:", err);
-        setError("Failed to load listings");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchListings();
-  }, []);
+  }, [user?.id, location, fetchListings]);
 
   // State for modals
   const [editModal, setEditModal] = useState(null);
@@ -56,10 +64,11 @@ const MyListings = () => {
 
   // Filter and search
   const filtered = listings.filter((item) => {
-    if (filterStatus !== "All" && item.status !== filterStatus) return false;
+    const itemStatus = item.status === "active" ? "Active" : "Inactive";
+    if (filterStatus !== "All" && itemStatus !== filterStatus) return false;
     if (
       searchTerm &&
-      !item.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      !item.title?.toLowerCase().includes(searchTerm.toLowerCase())
     )
       return false;
     return true;
@@ -75,10 +84,10 @@ const MyListings = () => {
             <h1 className="text-3xl font-bold mb-1">My Listings</h1>
             <p className="text-gray-500">Manage your rental items</p>
           </div>
-          <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-            <Plus className="w-4 h-4 inline mr-2" />
+          <Link to="/owner/add-item" className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 inline-flex items-center gap-2">
+            <Plus className="w-4 h-4" />
             Add Item
-          </button>
+          </Link>
         </div>
 
         {/* Search and Filter */}
@@ -98,9 +107,9 @@ const MyListings = () => {
             onChange={(e) => setFilterStatus(e.target.value)}
             className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
           >
-            <option>All</option>
-            <option>Active</option>
-            <option>Inactive</option>
+            <option value="All">All</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
           </select>
         </div>
 
@@ -163,28 +172,28 @@ const MyListings = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={item.image || "https://via.placeholder.com/40"}
-                          alt={item.name}
+                          src={item.images?.[0] || "https://via.placeholder.com/40"}
+                          alt={item.title}
                           className="w-10 h-10 rounded object-cover"
                         />
                         <span className="font-medium text-gray-900">
-                          {item.name}
+                          {item.title}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-gray-600">{item.category}</td>
                     <td className="px-6 py-4 text-gray-600">
-                      ₱{item.price?.toLocaleString()}
+                      ₱{item.pricePerDay?.toLocaleString()}
                     </td>
                     <td className="px-6 py-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          item.status === "Active"
+                          item.status === "active"
                             ? "bg-green-100 text-green-700"
                             : "bg-gray-100 text-gray-700"
                         }`}
                       >
-                        {item.status}
+                        {item.status === "active" ? "Active" : "Inactive"}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-gray-600">
@@ -193,10 +202,14 @@ const MyListings = () => {
                     <td className="px-6 py-4">
                       <ItemActionsMenu
                         item={item}
+                        menuOpen={menuOpen}
+                        setMenuOpen={setMenuOpen}
                         onEdit={() => setEditModal(item)}
                         onDelete={() => setDeleteModal(item)}
                         onViewPage={() => setViewPageModal(item)}
                         onHistory={() => setHistoryPanel(item)}
+                        onDuplicate={() => {}}
+                        onToggleStatus={() => {}}
                       />
                     </td>
                   </tr>
@@ -212,6 +225,7 @@ const MyListings = () => {
         open={!!editModal}
         onClose={() => setEditModal(null)}
         item={editModal}
+        onSave={fetchListings}
       />
       <DeleteConfirmModal
         open={!!deleteModal}

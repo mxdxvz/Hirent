@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import Sidebar from "../../components/layouts/OwnerSidebar";
 import { AuthContext } from "../../context/AuthContext";
 import { makeAPICall, ENDPOINTS } from "../../config/api";
+import { PH_BANKS, EWALLETS, PH_PROVINCES } from "../../constants/phData";
 
 export default function OwnerProfile() {
   const { user, updateUser } = useContext(AuthContext);
@@ -47,9 +48,20 @@ export default function OwnerProfile() {
       city: user.city || user.cityName || "",
       zipCode: user.postalCode || user.zipCode || "",
       country: user.country || "",
+      // Owner Setup Fields
+      sellerType: user.sellerType || "",
+      ownerAddress: user.ownerAddress || "",
+      pickupAddress: user.pickupAddress || "",
+      region: user.region || "",
+      regionName: user.regionName || "",
+      province: user.province || "",
+      provinceName: user.provinceName || "",
+      barangay: user.barangay || "",
+      // Business Fields
       businessName: user.businessName || "",
       businessType: user.businessType || user.sellerType || "Individual",
       taxId: user.taxId || "",
+      // Payment Fields
       bankName: user.bankName || "",
       accountNumber: user.accountNumber || "",
       accountName: user.accountName || "",
@@ -75,7 +87,7 @@ export default function OwnerProfile() {
     formData.append("avatar", file);
 
     try {
-      const updatedUser = await makeAPICall(ENDPOINTS.USERS.UPDATE_PROFILE, {
+      const updatedUser = await makeAPICall(ENDPOINTS.AUTH.PROFILE, {
         method: "PUT",
         body: formData,
       });
@@ -83,6 +95,7 @@ export default function OwnerProfile() {
       if (updatedUser) {
         updateUser(updatedUser);
         setProfileImage(updatedUser.avatar);
+        alert("Profile image updated successfully!");
       }
     } catch (err) {
       console.error("Image upload failed:", err);
@@ -93,8 +106,19 @@ export default function OwnerProfile() {
   // Save changes
   const handleSave = async () => {
     try {
-      const updated = await makeAPICall(ENDPOINTS.AUTH.PROFILE, {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("You are not logged in. Please login again.");
+        window.location.href = "/login";
+        return;
+      }
+
+      const response = await fetch(`http://localhost:5000${ENDPOINTS.AUTH.PROFILE}`, {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           name: `${profileData.firstName} ${profileData.lastName}`,
           phone: profileData.phone,
@@ -102,9 +126,21 @@ export default function OwnerProfile() {
           gender: profileData.gender,
           birthday: profileData.birthday,
           bio: profileData.bio,
+          // Owner Setup Fields
+          sellerType: profileData.sellerType,
+          ownerAddress: profileData.ownerAddress,
+          pickupAddress: profileData.pickupAddress,
+          region: profileData.region,
+          regionName: profileData.regionName,
+          province: profileData.province,
+          provinceName: profileData.provinceName,
+          barangay: profileData.barangay,
+          postalCode: profileData.zipCode,
+          // Business Fields
           businessName: profileData.businessName,
           businessType: profileData.businessType,
           taxId: profileData.taxId,
+          // Payment Fields
           bankName: profileData.bankName,
           accountNumber: profileData.accountNumber,
           accountName: profileData.accountName,
@@ -114,12 +150,15 @@ export default function OwnerProfile() {
         }),
       });
 
-      if (updated && updated.user) {
-        updateUser(updated.user);
+      const data = await response.json();
+
+      if (response.ok && data.success && data.user) {
+        updateUser(data.user);
         setIsEditing(false);
         alert("Profile updated successfully!");
       } else {
-        alert("Failed to save changes.");
+        console.error("Update response:", data);
+        alert(data.message || "Failed to save changes.");
       }
     } catch (err) {
       console.error("Update failed:", err);
@@ -269,6 +308,114 @@ export default function OwnerProfile() {
               </div>
             </div>
 
+            {/* OWNER SETUP INFO */}
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h3 className="text-lg font-semibold mb-6">
+                Owner Setup Information
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Seller Type */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Seller Type
+                  </label>
+                  <select
+                    name="sellerType"
+                    value={profileData.sellerType}
+                    disabled={!isEditing}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                  >
+                    <option value="">Select Type</option>
+                    <option value="Individual">Individual</option>
+                    <option value="Business">Business</option>
+                  </select>
+                </div>
+
+                {/* Owner Address */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Owner Address
+                  </label>
+                  <input
+                    type="text"
+                    name="ownerAddress"
+                    value={profileData.ownerAddress}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                  />
+                </div>
+
+                {/* Pickup Address */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Pickup Address
+                  </label>
+                  <input
+                    type="text"
+                    name="pickupAddress"
+                    value={profileData.pickupAddress}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                  />
+                </div>
+
+                {/* Region */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Region
+                  </label>
+                  <input
+                    type="text"
+                    name="regionName"
+                    value={profileData.regionName}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                  />
+                </div>
+
+                {/* Province */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Province
+                  </label>
+                  <select
+                    name="provinceName"
+                    value={profileData.provinceName}
+                    disabled={!isEditing}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                  >
+                    <option value="">Select Province</option>
+                    {PH_PROVINCES.map((province) => (
+                      <option key={province} value={province}>
+                        {province}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Barangay */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Barangay
+                  </label>
+                  <input
+                    type="text"
+                    name="barangay"
+                    value={profileData.barangay}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* BUSINESS INFO */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h3 className="text-lg font-semibold mb-6">
@@ -347,10 +494,11 @@ export default function OwnerProfile() {
                     className="w-full px-3 py-2 border rounded-lg text-sm"
                   >
                     <option value="">Select Bank</option>
-                    <option value="BDO Unibank">BDO Unibank</option>
-                    <option value="BPI">BPI</option>
-                    <option value="Metrobank">Metrobank</option>
-                    <option value="PNB">PNB</option>
+                    {PH_BANKS.map((bank) => (
+                      <option key={bank} value={bank}>
+                        {bank}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -405,9 +553,11 @@ export default function OwnerProfile() {
                     className="w-full px-3 py-2 border rounded-lg text-sm"
                   >
                     <option value="">Select Provider</option>
-                    <option value="GCash">GCash</option>
-                    <option value="Maya">Maya</option>
-                    <option value="PayPal">PayPal</option>
+                    {EWALLETS.map((wallet) => (
+                      <option key={wallet} value={wallet}>
+                        {wallet}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

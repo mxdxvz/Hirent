@@ -7,6 +7,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const passport = require("passport");
 const session = require("express-session");
+const multer = require("multer");
 const errorHandler = require("./middleware/errorHandler");
 const path = require("path");
 
@@ -23,6 +24,17 @@ const app = express();
 // -------------------------
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+// Configure multer for file uploads
+const storage = multer.memoryStorage(); // Store files in memory
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
+
+// Make upload available globally
+app.locals.upload = upload;
 
 // Passport initialization
 require("./config/passport");

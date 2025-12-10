@@ -17,13 +17,13 @@ export default function ItemActionsMenu({
         className="p-2 hover:bg-gray-200 rounded-lg"
         onClick={(e) => {
           e.stopPropagation();
-          setMenuOpen(menuOpen === item.id ? null : item.id);
+          setMenuOpen(menuOpen === item._id ? null : item._id);
         }}
       >
         <MoreVertical size={18} />
       </button>
 
-      {menuOpen === item.id && (
+      {menuOpen === item._id && (
         <div
           className="absolute right-0 mt-2 bg-white border shadow-xl rounded-lg w-48 z-50"
           onClick={(e) => e.stopPropagation()}

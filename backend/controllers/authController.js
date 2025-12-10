@@ -375,6 +375,15 @@ const updateProfile = async (req, res) => {
       user.password = await bcrypt.hash(newPassword, salt);
     }
 
+    // --- Handle avatar upload ---
+    if (req.file) {
+      // Convert file buffer to base64
+      user.avatar = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    } else if (req.body.avatar && req.body.avatar.startsWith('data:')) {
+      // Handle base64 avatar from FormData
+      user.avatar = req.body.avatar;
+    }
+
     // --- Update basic profile fields ---
     if (name) user.name = name;
     if (phone) user.phone = phone;

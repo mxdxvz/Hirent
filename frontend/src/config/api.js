@@ -148,6 +148,11 @@ export const makeAPICall = async (endpoint, options = {}) => {
     ...(options.headers || {}),
   };
 
+  // Don't override Content-Type if FormData is being sent
+  if (options.body instanceof FormData) {
+    delete headers["Content-Type"];
+  }
+
   // Inject Bearer token if available
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -159,15 +164,20 @@ export const makeAPICall = async (endpoint, options = {}) => {
       headers,
     });
 
-    // Handle 401 Unauthorized
-    if (!response.ok && response.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "/login";
-      return null;
-    }
-
     // Prevent undefined JSON errors
     const data = await response.json().catch(() => null);
+
+    // Handle 401 Unauthorized - only redirect if not a profile update
+    if (!response.ok && response.status === 401) {
+      // Don't logout on profile update 401 - it might be a validation error
+      if (endpoint !== ENDPOINTS.AUTH.PROFILE) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }
+      return data ?? null;
+    }
+
     return data ?? null;
   } catch (error) {
     console.error("API call failed:", error);

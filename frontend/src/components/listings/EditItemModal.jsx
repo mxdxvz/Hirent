@@ -1,8 +1,54 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { useState } from "react";
+import { ENDPOINTS } from "../../config/api";
 
-export default function EditItemModal({ open, onClose, item }) {
+export default function EditItemModal({ open, onClose, item, onSave }) {
+  const [formData, setFormData] = useState({
+    title: item?.title || "",
+    description: item?.description || "",
+    pricePerDay: item?.pricePerDay || "",
+    category: item?.category || "",
+  });
+  const [loading, setLoading] = useState(false);
+
   if (!item) return null;
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `http://localhost:5000${ENDPOINTS.ITEMS.UPDATE(item._id)}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      if (response.ok) {
+        alert("Item updated successfully!");
+        if (onSave) onSave();
+        onClose();
+      } else {
+        alert("Failed to update item");
+      }
+    } catch (error) {
+      console.error("Error updating item:", error);
+      alert("Error updating item");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -33,22 +79,43 @@ export default function EditItemModal({ open, onClose, item }) {
             </div>
 
             <div className="space-y-3">
-              <input
-                className="w-full border rounded-lg px-3 py-2"
-                defaultValue={item.name}
-              />
-              <input
-                className="w-full border rounded-lg px-3 py-2"
-                defaultValue={item.price}
-              />
-              <textarea
-                className="w-full border rounded-lg px-3 py-2 h-24"
-                defaultValue={item.description}
-              ></textarea>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Title</label>
+                <input
+                  type="text"
+                  name="title"
+                  className="w-full border rounded-lg px-3 py-2 mt-1"
+                  value={formData.title}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Price Per Day (₱)</label>
+                <input
+                  type="number"
+                  name="pricePerDay"
+                  className="w-full border rounded-lg px-3 py-2 mt-1"
+                  value={formData.pricePerDay}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                  name="description"
+                  className="w-full border rounded-lg px-3 py-2 h-24 mt-1"
+                  value={formData.description}
+                  onChange={handleChange}
+                ></textarea>
+              </div>
             </div>
 
-            <button className="mt-4 w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700">
-              Save Changes
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="mt-4 w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+            >
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </motion.div>
         </motion.div>

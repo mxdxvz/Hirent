@@ -105,7 +105,7 @@ function Chip({ label, selected, onClick }) {
    MAIN FORM
 ------------------------- */
 
-export default function AddNewItemForm() {
+export default function AddNewItemForm({ onCancel, onSuccess }) {
   const [formData, setFormData] = useState({
     itemName: "",
     description: "",
@@ -308,10 +308,13 @@ export default function AddNewItemForm() {
       for (const key in formData) {
         if (key !== "customItem" && key !== "customColor") {
           const value = formData[key];
-          if (Array.isArray(value) || typeof value === "object") {
-            form.append(key, JSON.stringify(value));
+          // Map itemName to title for backend
+          const fieldName = key === "itemName" ? "title" : key;
+          
+          if (Array.isArray(value) || (typeof value === "object" && value !== null)) {
+            form.append(fieldName, JSON.stringify(value));
           } else {
-            form.append(key, value);
+            form.append(fieldName, value);
           }
         }
       }
@@ -335,11 +338,15 @@ export default function AddNewItemForm() {
       const data = await response.json();
 
       // 4️⃣ Handle response
-      if (data.success) {
+      if (response.ok || data._id || data.success) {
         alert("Item added successfully!");
         clearAllFields();
+        // Call onSuccess callback to navigate
+        if (onSuccess) {
+          onSuccess();
+        }
       } else {
-        alert(data.message || "Failed to add item.");
+        alert(data.message || data.msg || "Failed to add item.");
       }
     } catch (error) {
       console.error("Error adding item:", error);
@@ -1087,6 +1094,8 @@ export default function AddNewItemForm() {
         </button>
 
         <button
+          type="button"
+          onClick={onCancel}
           className="flex-1 bg-white border py-2 rounded-md text-gray-700 font-medium 
             hover:bg-gray-50 transition"
         >

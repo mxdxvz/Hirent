@@ -1,8 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const passport = require("passport");
+const multer = require("multer");
 const { registerUser, loginUser, googleAuth, updateProfile } = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware");
+
+// Configure multer for avatar uploads
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit for avatars
+});
 
 // Google OAuth - Standard (renter) flow
 router.get("/google",
@@ -25,6 +33,6 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 
 // Profile management (requires authentication)
-router.put("/profile", authMiddleware, updateProfile);
+router.put("/profile", authMiddleware, upload.single("avatar"), updateProfile);
 
 module.exports = router;
