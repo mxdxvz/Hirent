@@ -40,14 +40,47 @@ const GoogleCallback = () => {
 
           login(token, userData);
 
-        setTimeout(() => {
-          const userRole = userData?.role || 'renter';
-          if (userRole === 'owner') {
-            navigate('/owner/dashboard', { replace: true });
-          } else {
-            navigate('/', { replace: true });
-          }
-        }, 100);
+          setTimeout(() => {
+            const userRole = userData?.role || 'renter';
+            
+            // If new user (not previously in DB), redirect to appropriate signup
+            if (userData?.isNewUser) {
+              console.log("[GoogleCallback] New user detected, redirecting to signup");
+              if (userRole === 'owner') {
+                // New owner - redirect to OwnerSetup to complete profile
+                navigate('/ownersetup', { 
+                  replace: true,
+                  state: { 
+                    googleData: userData,
+                    message: "Complete your owner profile"
+                  }
+                });
+              } else {
+                navigate('/signup', { 
+                  replace: true,
+                  state: { 
+                    googleData: userData,
+                    message: "Complete your profile"
+                  }
+                });
+              }
+            } else {
+              // Existing user - redirect based on role
+              if (userRole === 'owner') {
+                // Check if owner has completed setup
+                const ownerSetupCompleted = userData?.ownerSetupCompleted;
+                if (!ownerSetupCompleted) {
+                  // Owner hasn't completed setup yet - redirect back to setup
+                  console.log("[GoogleCallback] Owner setup incomplete, redirecting to setup");
+                  navigate('/ownersetup', { replace: true });
+                } else {
+                  navigate('/owner/dashboard', { replace: true });
+                }
+              } else {
+                navigate('/', { replace: true });
+              }
+            }
+          }, 100);
         } else {
           throw new Error("Missing authentication token");
         }

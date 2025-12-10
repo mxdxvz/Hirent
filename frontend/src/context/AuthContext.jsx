@@ -8,8 +8,9 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [collectionCount, setCollectionCount] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Check for existing token on mount
+  // Check for existing token on mount (restore session on refresh)
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -25,6 +26,9 @@ export const AuthProvider = ({ children }) => {
         }
       }
     }
+    
+    // Mark as initialized to prevent redirect on refresh
+    setIsInitialized(true);
   }, []);
 
   // Fetch counts when logged in
@@ -100,7 +104,8 @@ export const AuthProvider = ({ children }) => {
       wishlistCount,
       collectionCount,
       updateWishlistCount,
-      updateCollectionCount
+      updateCollectionCount,
+      isInitialized
     }}>
       {children}
     </AuthContext.Provider>

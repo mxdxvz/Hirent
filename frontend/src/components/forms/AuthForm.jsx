@@ -6,7 +6,6 @@ import Footer from "../layouts/Footer";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { FiEye, FiEyeOff } from "react-icons/fi";
-import { ENDPOINTS } from "../../config/api";
 
 const AuthForm = ({ mode }) => {
   const navigate = useNavigate();
@@ -127,7 +126,9 @@ const AuthForm = ({ mode }) => {
 
   // GOOGLE LOGIN HANDLER
   const handleGoogleAuth = () => {
-    // Redirect to backend Google OAuth endpoint (renters use the standard route)
+    // Redirect to backend Google OAuth endpoint
+    // For signup: uses standard /google route (creates renter by default)
+    // For login: uses standard /google route (logs in existing user)
     window.location.href = 'http://localhost:5000/api/auth/google';
   };
 

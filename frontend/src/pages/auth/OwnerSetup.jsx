@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import "../../assets/Auth.css";
 import logo from "../../assets/logo.png";
 import bg from "../../assets/auth-owner-bg.jpg";
 import Footer from "../../components/layouts/Footer";
 import Stepper from "../../components/Stepper";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 import {
   regions,
   provinces,
@@ -14,10 +15,12 @@ import {
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 
 const OwnerSetup = () => {
+  const navigate = useNavigate();
+  const { token } = useContext(AuthContext);
+
   const [agree, setAgree] = useState(false);
   const [contactFocused, setContactFocused] = useState(false);
   const [step, setStep] = useState(1);
-  const navigate = useNavigate();
 
   // --------------------------
   // FORM STATES
@@ -56,16 +59,56 @@ const OwnerSetup = () => {
     }
   }, [step]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const form = document.getElementById("ownerForm");
 
     if (!form.reportValidity()) {
       return; // stop if form is invalid
     }
 
-    // Save form data to localStorage
-    localStorage.setItem("ownerFormData", JSON.stringify(formData));
-    setIsSaved(true);
+    try {
+      console.log("[OwnerSetup] Saving data with token:", token ? "present" : "missing");
+      
+      // Save to backend
+      const response = await fetch("http://localhost:5000/api/auth/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          sellerType: formData.sellerType,
+          phone: formData.contact,
+          ownerAddress: formData.ownerAddress,
+          pickupAddress: formData.pickupAddress,
+          region: formData.region,
+          regionName: formData.regionName,
+          province: formData.province,
+          provinceName: formData.provinceName,
+          city: formData.city,
+          cityName: formData.cityName,
+          barangay: formData.barangay,
+          postalCode: formData.postalCode,
+        }),
+      });
+
+      console.log("[OwnerSetup] Response status:", response.status);
+      const data = await response.json();
+      console.log("[OwnerSetup] Response data:", data);
+
+      if (data.success) {
+        // Also save to localStorage as backup
+        localStorage.setItem("ownerFormData", JSON.stringify(formData));
+        setIsSaved(true);
+        console.log("[OwnerSetup] Data saved successfully");
+      } else {
+        console.error("Failed to save:", data.message);
+        alert("Failed to save: " + (data.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Save error:", err);
+      alert("Error saving data: " + err.message);
+    }
   };
 
   const handleNext = () => {
@@ -199,6 +242,35 @@ const OwnerSetup = () => {
   const renderContent = () => {
     // ------------------- SUBMISSION PAGE -------------------
     if (step === 3) {
+      const handleCompleteSetup = async () => {
+        try {
+          // Mark setup as completed in backend
+          const response = await fetch("http://localhost:5000/api/auth/profile", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              ownerSetupCompleted: true,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            // Clear localStorage setup data
+            localStorage.removeItem("ownerFormData");
+            // Redirect to dashboard
+            navigate("/owner/dashboard");
+          } else {
+            console.error("Failed to complete setup:", data.message);
+          }
+        } catch (err) {
+          console.error("Setup completion error:", err);
+        }
+      };
+
       return (
         <div className="flex flex-col items-center mt-2">
           <CheckCircleIcon className="w-44 h-44 text-[#4CE976] mb-6 mt-6" />
@@ -214,7 +286,7 @@ const OwnerSetup = () => {
           <div className="flex flex-col items-center gap-2">
             <button
               className="w-80 bg-[#7A1CA9] text-white rounded-md py-2 hover:bg-purple-600 transition text-[15px] font-medium"
-              onClick={() => navigate("/owner/add-item")}
+              onClick={handleCompleteSetup}
             >
               List Your Item
             </button>

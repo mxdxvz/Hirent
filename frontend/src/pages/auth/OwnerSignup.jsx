@@ -88,6 +88,9 @@ const OwnerSignup = () => {
       const user = data.user || { email: formData.email, role: "owner" };
       login(data.token, user);
 
+      // Clear any previous owner setup data for fresh start
+      localStorage.removeItem("ownerFormData");
+
       // ✓ Redirect owners to setup flow
       navigate("/ownersetup", { replace: true });
 
@@ -102,7 +105,7 @@ const OwnerSignup = () => {
   // -------------------------------
   const handleGoogleSignup = () => {
     window.location.href =
-      "http://localhost:5000/api/auth/google?role=owner";
+      "http://localhost:5000/api/auth/google/owner";
   };
 
   return (

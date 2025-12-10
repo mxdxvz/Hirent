@@ -33,17 +33,22 @@ export default function OwnerProfile() {
   useEffect(() => {
     if (!user) return;
 
+    // Split name into first and last
+    const nameParts = user.name ? user.name.split(" ") : ["", ""];
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
+
     setProfileData({
-      firstName: user.firstName || "",
-      lastName: user.lastName || "",
+      firstName: firstName,
+      lastName: lastName,
       email: user.email || "",
       phone: user.phone || "",
-      address: user.address || "",
-      city: user.city || "",
-      zipCode: user.zipCode || "",
+      address: user.address || user.ownerAddress || "",
+      city: user.city || user.cityName || "",
+      zipCode: user.postalCode || user.zipCode || "",
       country: user.country || "",
       businessName: user.businessName || "",
-      businessType: user.businessType || "Individual",
+      businessType: user.businessType || user.sellerType || "Individual",
       taxId: user.taxId || "",
       bankName: user.bankName || "",
       accountNumber: user.accountNumber || "",
@@ -88,13 +93,29 @@ export default function OwnerProfile() {
   // Save changes
   const handleSave = async () => {
     try {
-      const updated = await makeAPICall(ENDPOINTS.USERS.UPDATE_PROFILE, {
+      const updated = await makeAPICall(ENDPOINTS.AUTH.PROFILE, {
         method: "PUT",
-        body: JSON.stringify(profileData),
+        body: JSON.stringify({
+          name: `${profileData.firstName} ${profileData.lastName}`,
+          phone: profileData.phone,
+          address: profileData.address,
+          gender: profileData.gender,
+          birthday: profileData.birthday,
+          bio: profileData.bio,
+          businessName: profileData.businessName,
+          businessType: profileData.businessType,
+          taxId: profileData.taxId,
+          bankName: profileData.bankName,
+          accountNumber: profileData.accountNumber,
+          accountName: profileData.accountName,
+          ewalletProvider: profileData.ewalletProvider,
+          ewalletNumber: profileData.ewalletNumber,
+          ewalletName: profileData.ewalletName,
+        }),
       });
 
-      if (updated) {
-        updateUser(updated);
+      if (updated && updated.user) {
+        updateUser(updated.user);
         setIsEditing(false);
         alert("Profile updated successfully!");
       } else {
