@@ -17,6 +17,7 @@ import Footer from "./components/layouts/Footer";
 import Signup from "./pages/auth/Signup";
 import Login from "./pages/auth/Login";
 import GoogleCallback from "./pages/auth/GoogleCallback";
+import OwnerLogin from "./pages/auth/OwnerLogin";
 import OwnerSignup from "./pages/auth/OwnerSignup";
 import OwnerSetup from "./pages/auth/OwnerSetup";
 import AdminLogin from "./pages/auth/AdminLogin";
@@ -162,6 +163,7 @@ function App() {
             <Route path="/auth-callback" element={<GoogleCallback />} />
 
             {/* ===== OWNER ROUTES ===== */}
+            <Route path="/ownerlogin" element={<OwnerLogin />} />
             <Route path="/ownersignup" element={<OwnerSignup />} />
             <Route path="/ownersetup" element={<OwnerSetup />} />
 

@@ -238,17 +238,10 @@ export default function OwnerProfile() {
                 )}
               </div>
 
-              <h2 className="text-xl font-bold mt-4">
-                {profileData.firstName} {profileData.lastName}
-              </h2>
-              <p className="text-sm text-gray-600">
-                {profileData.businessName}
-              </p>
-
               {/* REAL USER DATA */}
-              <div className="flex items-center justify-center gap-2 mt-2">
+              <div className="flex items-center justify-center gap-2 mt-4">
                 <div>
-                  <p className="font-semibold text-xl text-gray-900">
+                  <p className="font-bold text-xl text-gray-900">
                     {user?.name ||
                       `${profileData.firstName} ${profileData.lastName}`}
                   </p>

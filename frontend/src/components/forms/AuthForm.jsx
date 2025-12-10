@@ -166,6 +166,15 @@ const AuthForm = ({ mode }) => {
                 </Link>
               )}
 
+              {mode === "login" && (
+                <Link
+                  to="/ownerlogin"
+                  className="text-[13px] font-medium text-[#7a19aa] hover:underline mb-1"
+                >
+                  Log In as Owner ➔
+                </Link>
+              )}
+
               <h2 className="text-[23px] font-bold text-gray-900">
                 {mode === "signup" ? "Get started with Hirent" : "Log In"}
               </h2>

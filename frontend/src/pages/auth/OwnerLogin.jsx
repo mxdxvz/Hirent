@@ -7,14 +7,13 @@ import Footer from "../../components/layouts/Footer";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { FiEye, FiEyeOff } from "react-icons/fi";
-import { makeAPICall, ENDPOINTS } from "../../config/api"; // ✓ Use centralized API
+import { makeAPICall, ENDPOINTS } from "../../config/api"; // centralized API
 
-const OwnerSignup = () => {
+const OwnerLogin = () => {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
 
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
     password: "",
   });
@@ -28,85 +27,85 @@ const OwnerSignup = () => {
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const validatePassword = (password) => {
+    if (!password) return "Password is required.";
     if (password.length < 6) return "Password must be at least 6 characters.";
-    if (!/[0-9]/.test(password))
-      return "Password must include at least one number.";
-    if (!/[A-Za-z]/.test(password))
-      return "Password must include at least one letter.";
     return "";
   };
 
   // -------------------------------
-  // ON SUBMIT → Register Owner
+  // ON SUBMIT → Login Owner
   // -------------------------------
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    // Validate name
-    if (!formData.name.trim()) {
-      setError("Name is required.");
+  // Validate email
+  if (!formData.email) {
+    setError("Email is required.");
+    return;
+  }
+  if (!validateEmail(formData.email)) {
+    setError("Enter a valid email address.");
+    return;
+  }
+
+  // Validate password
+  const passwordError = validatePassword(formData.password);
+  if (passwordError) {
+    setError(passwordError);
+    return;
+  }
+
+  setError("");
+
+  try {
+    const data = await makeAPICall(ENDPOINTS.AUTH.LOGIN, {
+      method: "POST",
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password,
+        role: "owner", // indicate we want owner login
+      }),
+    });
+
+    if (!data || !data.token) {
+      setError(data?.msg || data?.message || "Login failed.");
       return;
     }
 
-    // Validate email
-    if (!formData.email) {
-      setError("Email is required.");
-      return;
-    }
-    if (!validateEmail(formData.email)) {
-      setError("Enter a valid email address.");
-      return;
-    }
+    const user = data.user;
+    const userRole = user?.role;
 
-    // Validate password
-    const passwordError = validatePassword(formData.password);
-    if (passwordError) {
-      setError(passwordError);
+    // ENFORCE OWNER LOGIN
+    if (userRole !== "owner") {
+      setError("This account is not registered as an owner.");
       return;
     }
 
-    setError("");
+    // Save Auth
+    login(data.token, user);
 
-    try {
-      // ✓ Call backend through centralized API config
-      const data = await makeAPICall(ENDPOINTS.AUTH.REGISTER, {
-        method: "POST",
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role: "owner",
-        }),
-      });
-
-      if (!data || !data.token) {
-        setError(data?.msg || data?.message || "Registration failed.");
-        return;
-      }
-
-      // Save Auth
-      const user = data.user || { email: formData.email, role: "owner" };
-      login(data.token, user);
-
-      // Clear any previous owner setup data for fresh start
-      localStorage.removeItem("ownerFormData");
-
-      // ✓ Redirect owners to setup flow
+    // Redirect owner depending on setup
+    if (!user.ownerSetupCompleted) {
       navigate("/ownersetup", { replace: true });
-
-    } catch (err) {
-      console.error("Owner signup error:", err);
-      setError("Network error. Please try again.");
+    } else {
+      navigate("/owner/dashboard", { replace: true });
     }
-  };
+
+  } catch (err) {
+    console.error("Owner login error:", err);
+    setError("Network error. Please try again.");
+  }
+};
+
 
   // -------------------------------
-  // GOOGLE SIGNUP → Owner
+  // GOOGLE LOGIN → Owner
   // -------------------------------
-  const handleGoogleSignup = () => {
-    window.location.href =
-      "http://localhost:5000/api/auth/google/owner";
-  };
+  const handleGoogleLogin = () => {
+  // Pass mode=ownerlogin so GoogleCallback knows this is owner login
+  window.location.href =
+    "http://localhost:5000/api/auth/google/owner?mode=ownerlogin";
+};
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -122,43 +121,25 @@ const OwnerSignup = () => {
           <img src={logo} alt="Hirent Logo" className="w-8 h-auto" />
         </div>
 
-        <div className="z-10 cursor-default bg-white w-[480px] h-[650px] rounded-2xl shadow-2xl flex flex-row overflow-hidden hover:shadow-2xl hover:scale-[1.01] transition-all duration-300">
-          <div className="flex flex-col justify-center items-center w-full p-4">
+        <div className="z-10 cursor-default bg-white w-[460px] h-[560px] rounded-2xl shadow-2xl flex flex-row overflow-hidden hover:shadow-2xl hover:scale-[1.01] transition-all duration-300">
+          <div className="flex flex-col justify-center items-center w-full p-5">
 
             <div className="flex flex-col items-start justify-start ml-12 w-full">
               <img src={hirentLogo} alt="Hirent Logo" className="w-24 h-auto mb-6" />
             </div>
 
+            
+
             <div className="w-full flex flex-col items-start ml-14">
               <h2 className="text-[23px] font-bold text-gray-900">
-                Become an Owner
+                Log In 
               </h2>
               <p className="text-[14.5px] font-medium text-gray-600 mb-4">
-                Create your account to start listing your items
+                Continue as Owner
               </p>
             </div>
 
             <form className="space-y-2 w-[90%]" onSubmit={handleSubmit}>
-              {/* NAME */}
-              <div className="relative w-full mx-auto rounded-b-md overflow-hidden">
-                <input
-                  type="text"
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder=" "
-                  className="block rounded-t-lg px-2 pb-2 pt-4 w-full text-[14px] text-gray-900 bg-white border-0 border-b-2 border-gray-200 focus:outline-none focus:border-[#bb84d6] peer"
-                />
-                <label
-                  htmlFor="name"
-                  className="absolute text-[14px] duration-300 transform -translate-y-3 scale-75 top-2 left-2 peer-placeholder-shown:translate-y-1.5 peer-placeholder-shown:scale-100 peer-placeholder-shown:text-gray-500 peer-focus:-translate-y-3 peer-focus:scale-90 peer-focus:text-[#bb84d6]"
-                >
-                  Full Name
-                </label>
-              </div>
-
               {/* EMAIL */}
               <div className="relative w-full mx-auto rounded-b-md overflow-hidden">
                 <input
@@ -217,12 +198,12 @@ const OwnerSignup = () => {
                   type="submit"
                   className="w-full bg-[#7A1CA9] border border-[#7A1CA9] text-white py-3 text-[14px] font-medium rounded-md hover:bg-[#65188a] transition-all mt-2"
                 >
-                  Continue to email
+                  Continue to Email
                 </button>
 
                 <button
                   type="button"
-                  onClick={handleGoogleSignup}
+                  onClick={handleGoogleLogin}
                   className="w-full border border-gray-400 flex items-center justify-center gap-2 py-3 text-[14px] rounded-md text-gray-700 hover:text-[#9935cb] hover:border-[#9935cb] transition-all"
                 >
                   <img
@@ -230,32 +211,20 @@ const OwnerSignup = () => {
                     alt="Google"
                     className="w-5 h-5"
                   />
-                  Sign up with Google
+                  Log In with Google
                 </button>
               </div>
             </form>
 
             <p className="text-[12.5px] text-gray-600 text-center mt-5 mb-8">
-              Already have an account?{" "}
-              <Link to="/login" className="text-[#862bb3] hover:underline font-medium">
-                Login ➔
+              Don't have an account?{" "}
+              <Link to="/ownersignup" className="text-[#862bb3] hover:underline font-medium">
+                Sign up ➔
               </Link>
             </p>
 
-            <div className="w-full flex flex-col items-start ml-12">
-                <p className="text-[12px] text-gray-600 mb-3">
-                  By proceeding, you agree to the{" "}
-                  <span className="text-blue-600 cursor-pointer hover:underline">Terms and Conditions</span>{" "}
-                  and
-                  <br />
-                  <span className="text-blue-600 cursor-pointer hover:underline">
-                    Privacy Policy
-                  </span>
-                </p>
-              </div>
-              {/* BOTTOM LINKS */}
-            <div
-              className="w-full flex gap-3 text-[12px] text-gray-500 mt-4 justify-start ml-12"
+             <div
+              className="w-full flex gap-3 text-[12px] text-gray-500 mt-4 justify-center"
             >
               <span className="hover:underline cursor-pointer">Help</span>
               <span className="hover:underline cursor-pointer">Privacy</span>
@@ -270,4 +239,4 @@ const OwnerSignup = () => {
   );
 };
 
-export default OwnerSignup;
+export default OwnerLogin;

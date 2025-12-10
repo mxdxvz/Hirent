@@ -3,7 +3,17 @@ import { Link, useLocation } from "react-router-dom";
 import OwnerSidebar from "../../components/layouts/OwnerSidebar";
 import { makeAPICall, ENDPOINTS } from "../../config/api";
 
-import { Search, Plus, Package } from "lucide-react";
+import {
+  Search,
+  TrendingUp,
+  Clock,
+  Plus,
+  Package,
+  Hash,
+  Eye,
+  MapPin,
+  CalendarDays,
+} from "lucide-react";
 
 import RentalHistoryPanel from "../../components/listings/RentalHistoryPanel";
 import EditItemModal from "../../components/listings/EditItemModal";
@@ -13,17 +23,21 @@ import ItemActionsMenu from "../../components/listings/ItemActionsMenu";
 
 // Fetch owner listings from backend
 const MyListings = () => {
-  const { user } = React.useContext(require("../../context/AuthContext").AuthContext);
+  const { user } = React.useContext(
+    require("../../context/AuthContext").AuthContext
+  );
   const location = useLocation();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
+  const [expanded, setExpanded] = useState(null);
 
   // Function to fetch listings
   const fetchListings = React.useCallback(async () => {
     if (!user?.id) return;
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -73,151 +87,319 @@ const MyListings = () => {
       return false;
     return true;
   });
+  // BADGE COLORS
+  const availabilityBadge = {
+    Available: "bg-green-100 text-green-700 border border-green-300",
+    Unavailable: "bg-red-100 text-red-700 border border-red-300",
+    Rented: "bg-yellow-100 text-yellow-700 border border-yellow-300",
+  };
+
+  // AVAILABILITY BADGE RENDERER
+  const badge = (label, className) => (
+    <span className={`px-3 py-1 text-xs rounded-full font-medium ${className}`}>
+      {label}
+    </span>
+  );
+
+  // STATUS INDICATOR
+  const statusIndicator = (status) => {
+    const color =
+      status === "active"
+        ? "bg-green-500"
+        : status === "inactive"
+        ? "bg-gray-400"
+        : "bg-yellow-500";
+
+    const textColor =
+      status === "active"
+        ? "text-green-600"
+        : status === "inactive"
+        ? "text-gray-600"
+        : "text-yellow-600";
+
+    return (
+      <div className="flex items-center gap-2">
+        <span className={`w-2 h-2 rounded-full ${color}`}></span>
+        <span className={`text-[13px] capitalize font-medium ${textColor}`}>
+          {status}
+        </span>
+      </div>
+    );
+  };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex bg-gray-50 min-h-screen">
       <OwnerSidebar />
+
+      {/* MAIN CONTENT */}
       <div className="flex-1 p-8 ml-60">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-1">My Listings</h1>
-            <p className="text-gray-500">Manage your rental items</p>
+            <p className="text-gray-500">Manage all your rental items</p>
           </div>
-          <Link to="/owner/add-item" className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 inline-flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Add Item
+
+          <Link
+            to="/owner/add-item"
+            className="flex items-center gap-2 px-4 py-2 bg-[#7A1CA9] text-white rounded-xl text-sm font-medium hover:bg-[#6a1894] transition"
+          >
+            <Plus size={16} />
+            Add New Item
           </Link>
         </div>
 
-        {/* Search and Filter */}
-        <div className="flex gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search listings..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
+        {/* STATS CARDS */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Package className="w-8 h-8 text-[#7A1CA9]" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">
+                  {listings.length}
+                </p>
+                <p className="text-xs text-gray-500">Total Listings</p>
+              </div>
+            </div>
           </div>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-          >
-            <option value="All">All</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
+
+          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <TrendingUp className="w-8 h-8 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">
+                  {listings.filter((l) => l.status === "active").length}
+                </p>
+                <p className="text-xs text-gray-500">Active Items</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Clock className="w-8 h-8 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">
+                  {listings.filter((l) => l.totalBookings > 0).length}
+                </p>
+                <p className="text-xs text-gray-500">Currently Rented</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <TrendingUp className="w-8 h-8 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">
+                  ₱
+                  {listings
+                    .reduce((sum, i) => sum + (i.totalRevenue || 0), 0)
+                    .toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-500">Total Revenue</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-32">
-            <p className="text-gray-500">Loading listings...</p>
-          </div>
-        )}
+        {/* SEARCH + FILTER */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
+          <div className="flex gap-3 mb-3">
+            {/* SEARCH */}
+            <div className="flex items-center border bg-white rounded-lg px-3 py-2 flex-1">
+              <Search size={16} className="text-gray-400" />
+              <input
+                className="ml-2 w-full text-sm outline-none"
+                placeholder="Search by name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
 
-        {/* Error State */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-            {error}
+            {/* STATUS DROPDOWN */}
+            <select
+              className="border rounded-lg px-3 py-2 text-sm bg-white"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="All">All</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
           </div>
-        )}
+        </div>
 
-        {/* Empty State */}
-        {!loading && listings.length === 0 && (
-          <div className="text-center py-32">
-            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 font-medium text-xl">
-              No listings yet.
-            </p>
-            <p className="text-gray-400 text-md">
-              Start by adding your first rental item.
-            </p>
-          </div>
-        )}
+        {/* RESULTS COUNT */}
+        <p className="text-sm text-gray-500 mb-2">
+          Showing {filtered.length} of {listings.length} listings
+        </p>
 
-        {/* Listings Table */}
-        {!loading && listings.length > 0 && (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+        {/* TABLE */}
+        <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 border-b">
+              <tr className="text-[13px] text-gray-600">
+                <th className="py-2 px-4 font-semibold">Item</th>
+                <th className="py-2 px-12 font-semibold">Price</th>
+                <th className="py-2 px-12 font-semibold">Performance</th>
+                <th className="py-2 px-12 font-semibold">Availability</th>
+                <th className="py-2 px-12 font-semibold">Status</th>
+                <th className="py-2 px-12 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {filtered.length === 0 ? (
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                    Item
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                    Price
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                    Bookings
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                    Actions
-                  </th>
+                  <td colSpan={6} className="py-12 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <Package className="w-12 h-12 text-gray-300" />
+                      <p className="text-gray-500 text-sm">No listings found</p>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y">
-                {filtered.map((item) => (
-                  <tr key={item._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={item.images?.[0] || "https://via.placeholder.com/40"}
-                          alt={item.title}
-                          className="w-10 h-10 rounded object-cover"
-                        />
-                        <span className="font-medium text-gray-900">
-                          {item.title}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">{item.category}</td>
-                    <td className="px-6 py-4 text-gray-600">
-                      ₱{item.pricePerDay?.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          item.status === "active"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
+              ) : (
+                filtered.map((item) => (
+                  <React.Fragment key={item._id}>
+                    {/* MAIN ROW */}
+                    <tr
+                      className="border-b hover:bg-gray-50 cursor-pointer"
+                      onClick={() =>
+                        setExpanded(expanded === item._id ? null : item._id)
+                      }
+                    >
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={
+                              item.images?.[0] ||
+                              "https://via.placeholder.com/40"
+                            }
+                            alt={item.title}
+                            className="w-14 h-14 object-cover rounded-lg border"
+                          />
+                          <div>
+                            <p className="font-semibold">{item.title}</p>
+                            <p className="text-xs text-gray-500 flex items-center gap-1">
+                              <Hash size={12} />
+                              {item._id.slice(0, 6)} • {item.category}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-12 text-gray-700 font-medium">
+                        ₱{item.pricePerDay?.toLocaleString()}/day
+                      </td>
+
+                      {/* PERFORMANCE */}
+                      <td className="py-3 px-12">
+                        <div className="text-xs space-y-1">
+                          <p className="flex items-center gap-1 text-gray-600">
+                            <Eye size={12} />
+                            {item.views || 0} views
+                          </p>
+                          <p className="flex items-center gap-1 text-gray-600">
+                            <Package size={12} />
+                            {item.totalBookings || 0} bookings
+                          </p>
+                          <p className="text-green-600 font-medium">
+                            ₱{(item.totalRevenue || 0).toLocaleString()} earned
+                          </p>
+                        </div>
+                      </td>
+
+                      {/* AVAILABILITY */}
+                      <td className="py-3 px-12">
+                        {badge(
+                          item.availability || "Available",
+                          availabilityBadge[item.availability || "Available"]
+                        )}
+                      </td>
+
+                      {/* STATUS */}
+                      <td className="py-3 px-12">
+                        {statusIndicator(item.status)}
+                      </td>
+
+                      {/* ACTIONS */}
+                      <td
+                        className="py-3 px-12 text-right relative"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        {item.status === "active" ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {item.totalBookings || 0}
-                    </td>
-                    <td className="px-6 py-4">
-                      <ItemActionsMenu
-                        item={item}
-                        menuOpen={menuOpen}
-                        setMenuOpen={setMenuOpen}
-                        onEdit={() => setEditModal(item)}
-                        onDelete={() => setDeleteModal(item)}
-                        onViewPage={() => setViewPageModal(item)}
-                        onHistory={() => setHistoryPanel(item)}
-                        onDuplicate={() => {}}
-                        onToggleStatus={() => {}}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                        <ItemActionsMenu
+                          item={item}
+                          menuOpen={menuOpen}
+                          setMenuOpen={setMenuOpen}
+                          onEdit={() => setEditModal(item)}
+                          onDelete={() => setDeleteModal(item)}
+                          onViewPage={() => setViewPageModal(item)}
+                          onHistory={() => setHistoryPanel(item)}
+                          onDuplicate={() => {}}
+                          onToggleStatus={() => {}}
+                        />
+                      </td>
+                    </tr>
+
+                    {/* EXPANDED ROW */}
+                    {expanded === item._id && (
+                      <tr className="bg-gray-50">
+                        <td colSpan={6} className="p-4">
+                          <div className="grid grid-cols-3 gap-6">
+                            {/* LOCATION */}
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Location
+                              </p>
+                              <p className="text-sm font-medium flex items-center gap-1">
+                                <MapPin size={14} />
+                                {item.location || "No location set"}
+                              </p>
+                            </div>
+
+                            {/* DATE ADDED */}
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Added On
+                              </p>
+                              <p className="text-sm font-medium flex items-center gap-1">
+                                <CalendarDays size={14} />
+                                {new Date(item.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+
+                            {/* LAST UPDATED */}
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Last Updated
+                              </p>
+                              <p className="text-sm font-medium">
+                                {item.updatedAt
+                                  ? new Date(
+                                      item.updatedAt
+                                    ).toLocaleDateString()
+                                  : "N/A"}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modals */}
