@@ -27,7 +27,7 @@ const OwnerSetup = () => {
   // --------------------------
   const [formData, setFormData] = useState({
     sellerType: "individual",
-    name: "",
+    businessName: "",
     contact: "",
     ownerAddress: "",
     pickupAddress: "",
@@ -224,7 +224,7 @@ const OwnerSetup = () => {
 
   const isStep1Valid = () => {
     return (
-      formData.name.trim() !== "" &&
+      formData.businessName.trim() !== "" &&
       formData.contact.trim() !== "" &&
       formData.ownerAddress.trim() !== "" &&
       formData.pickupAddress.trim() !== "" &&
@@ -244,7 +244,17 @@ const OwnerSetup = () => {
     if (step === 3) {
       const handleCompleteSetup = async () => {
         try {
-          // Mark setup as completed in backend
+          // Check if token exists
+          if (!token) {
+            console.error("[OwnerSetup] No token found");
+            alert("Authentication error. Please login again.");
+            navigate("/ownerlogin");
+            return;
+          }
+
+          console.log("[OwnerSetup] Starting setup completion with token...");
+
+          // Mark setup as completed in backend with all form data
           const response = await fetch("http://localhost:5000/api/auth/profile", {
             method: "PUT",
             headers: {
@@ -252,22 +262,67 @@ const OwnerSetup = () => {
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
+              // Owner setup data
+              sellerType: formData.sellerType,
+              businessName: formData.businessName,
+              phone: formData.contact,
+              ownerAddress: formData.ownerAddress,
+              pickupAddress: formData.pickupAddress,
+              region: formData.region,
+              regionName: formData.regionName,
+              province: formData.province,
+              provinceName: formData.provinceName,
+              city: formData.city,
+              cityName: formData.cityName,
+              barangay: formData.barangay,
+              postalCode: formData.postalCode,
+              // Mark setup as completed
               ownerSetupCompleted: true,
             }),
           });
 
+          console.log("[OwnerSetup] Profile update response status:", response.status);
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error("[OwnerSetup] Profile update failed:", errorData);
+            alert("Failed to complete setup: " + (errorData.message || "Unknown error"));
+            return;
+          }
+
           const data = await response.json();
+          console.log("[OwnerSetup] Profile update success:", data);
 
           if (data.success) {
             // Clear localStorage setup data
             localStorage.removeItem("ownerFormData");
-            // Redirect to dashboard
-            navigate("/owner/dashboard");
+            
+            // Send verification email
+            try {
+              const emailResponse = await fetch("http://localhost:5000/api/auth/send-verification-email", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+              
+              const emailData = await emailResponse.json();
+              console.log("[OwnerSetup] Email verification sent:", emailData);
+            } catch (emailErr) {
+              console.error("[OwnerSetup] Error sending verification email:", emailErr);
+              // Continue even if email fails
+            }
+            
+            // Redirect to add item page
+            navigate("/owner/add-item");
           } else {
             console.error("Failed to complete setup:", data.message);
+            alert("Failed to complete setup: " + (data.message || "Unknown error"));
           }
         } catch (err) {
           console.error("Setup completion error:", err);
+          alert("Error completing setup: " + err.message);
         }
       };
 
@@ -444,15 +499,15 @@ const OwnerSetup = () => {
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name <span className="text-red-500">*</span>
+              Business Name <span className="text-red-500">*</span>
             </label>
             <input
-              name="name"
+              name="businessName"
               required
               type="text"
-              value={formData.name}
+              value={formData.businessName}
               onChange={handleChange}
-              placeholder="Owner Full Name / Business Name"
+              placeholder="Your Business Name"
               className="w-full bg-gray-100 rounded-md px-3 py-2 text-[14px] focus:outline-[#7A1CA9]"
             />
           </div>

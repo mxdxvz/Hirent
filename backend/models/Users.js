@@ -48,7 +48,12 @@ const UserSchema = new mongoose.Schema({
   // Verification Status
   emailVerified: { type: Boolean, default: false },
   phoneVerified: { type: Boolean, default: false },
-  idVerified: { type: Boolean, default: false }
+  idVerified: { type: Boolean, default: false },
+  
+  // Email Verification Token (for owner setup)
+  emailVerificationToken: { type: String, sparse: true },
+  emailVerificationTokenExpiry: { type: Date },
+  emailVerificationSentAt: { type: Date }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', UserSchema);

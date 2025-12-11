@@ -282,15 +282,10 @@ export default function AddNewItemForm({ onCancel, onSuccess }) {
     if (!formData.itemName) temp.itemName = "Item name required";
     if (!formData.description) temp.description = "Description required";
     if (!formData.pricePerDay) temp.price = "Price required";
-    if (!formData.securityDeposit) temp.deposit = "Security deposit required";
     if (!formData.condition) temp.condition = "Condition required";
     if (!formData.category) temp.category = "Category required";
     if (!formData.location) temp.location = "Location required";
-    if (!formData.zone) temp.zone = "Zone / barangay required";
-    if (!formData.postalCode) temp.postalCode = "Postal code required";
-    if (formData.deliveryAvailable && !formData.deliveryFee)
-      temp.deliveryFee = "Delivery fee required";
-    if (imagePreviews.length === 0) temp.photo = "At least 1 photo required";
+    if (document.getElementById("uploadImg")?.files?.length === 0) temp.photo = "At least 1 photo required";
 
     setErrors(temp);
     return Object.keys(temp).length === 0;

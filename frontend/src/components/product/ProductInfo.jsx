@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Heart, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 
-const ProductInfo = ({ product }) => {
+const ProductInfo = ({ product, handleAddToCollection, handleToggleWishlist, wishlist }) => {
   const [quantity, setQuantity] = useState(1);
 
   const [damageWaiver, setDamageWaiver] = useState(false);
@@ -40,7 +40,7 @@ const ProductInfo = ({ product }) => {
   const incrementQuantity = () =>
     quantity < product.quantity && setQuantity(quantity + 1);
 
-  const rentalTotal = product.price * quantity;
+  const rentalTotal = product.pricePerDay * quantity;
   const totalDamageFee = damageWaiver ? DAMAGE_FEE : 0;
   const totalPrice = rentalTotal + DEPOSIT_FEE + totalDamageFee;
 
@@ -162,7 +162,7 @@ const ProductInfo = ({ product }) => {
 
       {/* TITLE */}
       <h1 className="text-lg font-semibold  text-gray-900  tracking-tight">
-        {product.name}
+        {product.title}
       </h1>
 
       {/* RATINGS */}
@@ -185,37 +185,34 @@ const ProductInfo = ({ product }) => {
         </div>
 
         <span className="text-gray-600 text-[10px]">
-          ({product.reviews} Reviews)
+          ({product.reviews || 0} Reviews)
         </span>
 
         <span className="text-gray-300 text-[10px]">•</span>
 
         <span className="text-green-600 text-[10px] font-medium">
-          In Stock ({product.quantity} available)
+          {product.status === 'active' ? 'In Stock' : 'Unavailable'}
         </span>
       </div>
 
       {/* PRICE */}
       <div className="flex items-center gap-2">
-        <span className="text-2xl font-bold text-[#7A1CA9]">
-          ₱ {product.price.toFixed(2)}
-        </span>
-        <span className="text-gray-400 line-through text-xs">
-          ₱ {product.originalPrice}
+        <span className="font-semibold text-lg">
+          ₱{product.pricePerDay || 0}
         </span>
       </div>
 
       {/* DESCRIPTION */}
       <p className="text-gray-600 text-xs leading-relaxed border-b pb-3">
-        {product.description}
+        {product.description || "No description available"}
       </p>
 
       {/* PRODUCT ATTRIBUTES */}
       <div className="space-y-1 text-xs text-gray-700 border-b pb-3">
-        <p><strong>Condition:</strong> {product.condition}</p>
-        <p><strong>Platform Compatibility:</strong> {product.platformCompatibility}</p>
-        <p><strong>Connectivity:</strong> {product.connectivity}</p>
-        <p><strong>Included Accessories:</strong> {product.includedAccessories}</p>
+        <p><strong>Condition:</strong> {product.condition || "Not specified"}</p>
+        <p><strong>Platform Compatibility:</strong> {product.platformCompatibility || "Not specified"}</p>
+        <p><strong>Connectivity:</strong> {product.connectivity || "Not specified"}</p>
+        <p><strong>Included Accessories:</strong> {product.includedAccessories || "None"}</p>
       </div>
 
       {/* FEES */}
@@ -420,12 +417,12 @@ const ProductInfo = ({ product }) => {
           </button>
         </div>
 
-        <button className="flex-1 bg-[#7A1CA9] text-white px-4 py-2 rounded-lg font-semibold text-xs shadow-md hover:bg-purple-800 transition">
-          Book Item
+        <button onClick={() => handleAddToCollection(product)} className="flex-1 bg-[#7A1CA9] text-white px-4 py-2 rounded-lg font-semibold text-xs shadow-md hover:bg-purple-800 transition">
+          Add to Collection
         </button>
 
-        <button className="p-2 border border-gray-300 rounded-lg hover:border-purple-600 hover:bg-purple-50">
-          <Heart className="w-4 h-4 text-gray-600" />
+        <button onClick={() => handleToggleWishlist(product._id)} className={`p-2 border rounded-lg transition-colors ${wishlist.includes(product._id) ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 hover:border-purple-600 hover:bg-purple-50'}`}>
+          <Heart className="w-4 h-4" />
         </button>
       </div>
 

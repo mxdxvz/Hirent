@@ -23,7 +23,7 @@ export default function ItemPageModal({ open, onClose, item }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">{item.name}</h2>
+              <h2 className="text-xl font-semibold">{item.title}</h2>
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-gray-200 rounded-full"
@@ -33,15 +33,15 @@ export default function ItemPageModal({ open, onClose, item }) {
             </div>
 
             <img
-              src={item.image}
-              alt=""
+              src={item.images?.[0] || 'https://via.placeholder.com/150'}
+              alt={item.title}
               className="w-full h-52 object-cover rounded-lg border mb-4"
             />
 
             <p className="text-gray-700 mb-2">{item.description}</p>
 
             <p className="text-sm text-gray-600">
-              Price: <b>₱{item.price}/day</b>
+              Price: <b>₱{item.pricePerDay}/day</b>
             </p>
             <p className="text-sm text-gray-600">
               Condition: <b>{item.condition}</b>

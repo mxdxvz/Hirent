@@ -2,7 +2,14 @@ const express = require("express");
 const router = express.Router();
 const passport = require("passport");
 const multer = require("multer");
-const { registerUser, loginUser, googleAuth, updateProfile } = require("../controllers/authController");
+const { 
+  registerUser, 
+  loginUser, 
+  googleAuth, 
+  updateProfile,
+  sendOwnerVerificationEmailEndpoint,
+  verifyOwnerEmail
+} = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 // Configure multer for avatar uploads
@@ -34,5 +41,9 @@ router.post("/login", loginUser);
 
 // Profile management (requires authentication)
 router.put("/profile", authMiddleware, upload.single("avatar"), updateProfile);
+
+// Email Verification (requires authentication)
+router.post("/send-verification-email", authMiddleware, sendOwnerVerificationEmailEndpoint);
+router.post("/verify-email", verifyOwnerEmail);
 
 module.exports = router;

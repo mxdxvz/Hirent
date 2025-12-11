@@ -28,9 +28,6 @@ const MyListings = () => {
   );
   const location = useLocation();
   const [listings, setListings] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const [error, setError] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
   const [expanded, setExpanded] = useState(null);
 
@@ -38,17 +35,12 @@ const MyListings = () => {
   const fetchListings = React.useCallback(async () => {
     if (!user?.id) return;
 
-    setLoading(true);
-    setError(null);
     try {
       // Fetch only items owned by the logged-in user
       const data = await makeAPICall(ENDPOINTS.ITEMS.BY_OWNER(user.id));
       setListings(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error fetching listings:", err);
-      setError("Failed to load listings");
-    } finally {
-      setLoading(false);
     }
   }, [user?.id]);
 
@@ -64,6 +56,61 @@ const MyListings = () => {
   const [historyPanel, setHistoryPanel] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
+
+  // Handle duplicate
+  const handleToggleStatus = async (item) => {
+    try {
+      const newStatus = item.status === "active" ? "inactive" : "active";
+      const token = localStorage.getItem("token");
+      await fetch(`http://localhost:5000/api/items/${item._id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      fetchListings(); // Refetch to show the updated status
+    } catch (err) {
+      console.error("Error toggling status:", err);
+    }
+  };
+
+  const handleDuplicate = async (item) => {
+    try {
+      const { _id, owner, createdAt, updatedAt, __v, ...itemData } = item;
+      itemData.title = `${item.title} (Copy)`;
+
+      const formData = new FormData();
+      for (const key in itemData) {
+        const value = itemData[key];
+        if (value !== null && value !== undefined && value !== 'null') {
+          if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, value);
+          }
+        }
+      }
+
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:5000${ENDPOINTS.ITEMS.CREATE}`, {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+      });
+
+      if (response.ok) {
+        fetchListings(); // Refetch to show the new item
+      } else {
+        console.error("Failed to duplicate item");
+      }
+    } catch (err) {
+      console.error("Error duplicating item:", err);
+    }
+  };
 
   // Handle delete
   const handleDelete = async (id) => {
@@ -244,7 +291,7 @@ const MyListings = () => {
         </p>
 
         {/* TABLE */}
-        <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border shadow-sm">
           <table className="w-full text-left">
             <thead className="bg-gray-50 border-b">
               <tr className="text-[13px] text-gray-600">
@@ -344,8 +391,8 @@ const MyListings = () => {
                           onDelete={() => setDeleteModal(item)}
                           onViewPage={() => setViewPageModal(item)}
                           onHistory={() => setHistoryPanel(item)}
-                          onDuplicate={() => {}}
-                          onToggleStatus={() => {}}
+                          onDuplicate={() => handleDuplicate(item)}
+                          onToggleStatus={() => handleToggleStatus(item)}
                         />
                       </td>
                     </tr>

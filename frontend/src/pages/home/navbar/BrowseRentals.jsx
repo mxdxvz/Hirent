@@ -20,7 +20,7 @@ const BrowseRentals = () => {
   const [filters, setFilters] = useState({
     category: "",
     location: "",
-    priceRange: [100, 1000],
+    priceRange: [0, 99999],
     fromDate: null,
     toDate: null,
     rating: null,
@@ -97,13 +97,14 @@ const BrowseRentals = () => {
     try {
       await makeAPICall(ENDPOINTS.CART.ADD, {
         method: "POST",
-        body: JSON.stringify({ itemId: item.id, days: 1 }),
+        body: JSON.stringify({ itemId: item._id, quantity: 1 }),
+        headers: { "Content-Type": "application/json" },
       });
 
       // Show "added" animation
-      setJustAdded((prev) => [...prev, item.id]);
+      setJustAdded((prev) => [...prev, item._id]);
       setTimeout(() => {
-        setJustAdded((prev) => prev.filter((id) => id !== item.id));
+        setJustAdded((prev) => prev.filter((id) => id !== item._id));
       }, 2000);
     } catch (err) {
       console.error("Failed to add to cart:", err);
@@ -133,15 +134,9 @@ const BrowseRentals = () => {
     if (filters.priceRange) {
       const [min, max] = filters.priceRange;
       filtered = filtered.filter((item) => {
-        const price = Number(item.price);
+        const price = Number(item.pricePerDay);
         return price >= min && price <= max;
       });
-    }
-
-    if (filters.rating) {
-      const min = filters.rating;
-      const max = filters.rating + 0.9;
-      filtered = filtered.filter((item) => item.rating >= min && item.rating <= max);
     }
 
     if (filters.fromDate && filters.toDate) {
@@ -149,17 +144,23 @@ const BrowseRentals = () => {
       const end = dayjs(filters.toDate);
 
       filtered = filtered.filter((item) => {
-        const availableFrom = dayjs(item.availableFrom);
-        const availableTo = dayjs(item.availableTo);
-        return availableFrom.isBefore(end) && availableTo.isAfter(start);
+        if (item.availabilityType === 'always' || item.availabilityType === 'specific-dates') {
+          const isUnavailable = item.unavailableDates.some(range => {
+            const unavailableStart = dayjs(range.start);
+            const unavailableEnd = dayjs(range.end);
+            return start.isBefore(unavailableEnd) && end.isAfter(unavailableStart);
+          });
+          return !isUnavailable;
+        }
+        return true;
       });
     }
 
     // Sorting
     if (sortOption === "Lowest Price") {
-      filtered.sort((a, b) => a.price - b.price);
+      filtered.sort((a, b) => a.pricePerDay - b.pricePerDay);
     } else if (sortOption === "Highest Price") {
-      filtered.sort((a, b) => b.price - a.price);
+      filtered.sort((a, b) => b.pricePerDay - a.pricePerDay);
     } else if (sortOption === "Newest") {
       filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } else if (sortOption === "Popular") {
@@ -205,9 +206,9 @@ const BrowseRentals = () => {
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-2 gap-y-4">
               {filteredListings.map((item) => (
                 <RentalItemCard
-                  key={item.id}
+                  key={item._id}
                   item={item}
-                  wishlist={wishlist}
+                  wishlist={wishlist.map(i => i._id)}
                   justAdded={justAdded}
                   toggleWishlist={toggleWishlist}
                   handleAddToCollection={handleAddToCollection}

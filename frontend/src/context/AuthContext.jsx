@@ -26,20 +26,20 @@ export const AuthProvider = ({ children }) => {
     if (isLoggedIn && token) {
       const fetchCounts = async () => {
         try {
-          const [wishRes, collRes] = await Promise.all([
-            fetch("http://localhost:5000/api/wishlist/count", {
-              headers: { "Authorization": `Bearer ${token}` }
-            }),
-            fetch("http://localhost:5000/api/collection/count", {
-              headers: { "Authorization": `Bearer ${token}` }
-            })
+          const [wishRes, cartRes] = await Promise.all([
+            fetch("http://localhost:5000/api/wishlist", { headers: { Authorization: `Bearer ${token}` } }),
+            fetch("http://localhost:5000/api/cart", { headers: { Authorization: `Bearer ${token}` } }),
           ]);
 
-          const wishData = await wishRes.json();
-          const collData = await collRes.json();
+          if (wishRes.ok) {
+            const wishData = await wishRes.json();
+            setWishlistCount(wishData.length || 0);
+          }
 
-          setWishlistCount(wishData.count || 0);
-          setCollectionCount(collData.count || 0);
+          if (cartRes.ok) {
+            const cartData = await cartRes.json();
+            setCollectionCount(cartData.items?.length || 0);
+          }
         } catch (error) {
           console.error("Error fetching counts:", error);
         }

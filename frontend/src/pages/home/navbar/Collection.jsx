@@ -33,8 +33,8 @@ const CollectionPage = () => {
     const fetchCollection = async () => {
       try {
         const data = await makeAPICall(ENDPOINTS.CART.GET); // Assuming CART.GET returns user's collection
-        if (Array.isArray(data)) {
-          setCollectionItems(data);
+        if (data && Array.isArray(data.items)) {
+          setCollectionItems(data.items);
         }
       } catch (error) {
         console.error("Failed to fetch collection:", error);

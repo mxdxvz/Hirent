@@ -22,17 +22,17 @@ const CollectionCard = ({
     >
       <div className="flex gap-6 relative">
         <img
-          src={item.image}
+          src={item.itemId.images?.[0] || '/placeholder.png'}
           className="w-36 h-36 bg-gray-100 object-contain rounded-xl"
         />
 
         <div className="flex-1 flex flex-col justify-between">
           <div>
-            <h2 className="font-semibold text-[16px]">{item.name}</h2>
+            <h2 className="font-semibold text-[16px]">{item.itemId.title}</h2>
 
             <div className="text-[13px] mt-1 text-gray-700">
               <div className="flex items-center gap-1">
-                Listed by {item.owner}
+                Listed by {item.itemId.owner?.name || 'Unknown'}
               </div>
 
               {/* STATUS BADGE */}
@@ -100,7 +100,7 @@ const CollectionCard = ({
                     <div className="flex items-center gap-1">
                       <ShieldAlert className="w-4 h-4" />
                       <span>
-                        Security Deposit (₱{item.securityDeposit ?? 0})
+                        Security Deposit (₱{item.itemId.securityDeposit || 0})
                       </span>
                     </div>
                   </div>
@@ -109,7 +109,7 @@ const CollectionCard = ({
                 {/* RIGHT SIDE PRICE INFO */}
                 <div className="text-right text-[13px] flex flex-col gap-0.5">
                   <span className="font-bold text-[15px] text-purple-900">
-                    ₱{item.price}/day
+                    ₱{item.itemId.pricePerDay || 0}/day
                   </span>
 
                   {(item.status === "approved" || item.status === "pending") && (() => {
@@ -151,7 +151,7 @@ const CollectionCard = ({
               </button>
             ) : (
               <button
-                onClick={() => handleRemoveItem(item._id) }
+                onClick={() => handleRemoveItem(item.itemId._id)}
                 className="px-3 py-1.5 text-[12.5px] shadow-sm rounded-full text-red-500 border border-red-300 bg-red-50 hover:bg-red-100"
               >
                 Remove from collection

@@ -18,14 +18,14 @@ const upload = multer({
 
 // PUBLIC
 router.get("/search", itemsController.searchItems);
+router.get("/:id", itemsController.getSingleItem);
 router.get("/", itemsController.getAllItems);
 
 // OWNER ROUTES with Validation
-router.post("/", auth, createItemValidator, validationHandler, upload.array("images", 10), itemsController.createItem);
+router.post("/", auth, upload.array("images", 10), createItemValidator, validationHandler, itemsController.createItem);
 router.get("/owner/:ownerId", auth, itemsController.getItemsByOwner);
-router.put("/:id", auth, updateItemValidator, validationHandler, upload.array("images", 10), itemsController.updateItem);
+router.put("/:id", auth, upload.array("images", 10), updateItemValidator, validationHandler, itemsController.updateItem);
 router.delete("/:id", auth, itemsController.deleteItem);
-
-router.get("/", itemsController.getAllItems);
+router.patch("/:id/status", auth, itemsController.updateItemStatus);
 
 module.exports = router;

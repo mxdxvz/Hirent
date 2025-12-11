@@ -1,11 +1,26 @@
 const Item = require("../models/Item");
 
 // ------------------------
+// GET SINGLE ITEM
+// ------------------------
+exports.getSingleItem = async (req, res) => {
+  try {
+    const item = await Item.findById(req.params.id).populate('owner');
+    if (!item) {
+      return res.status(404).json({ success: false, msg: "Item not found" });
+    }
+    res.json({ success: true, item });
+  } catch (err) {
+    res.status(500).json({ success: false, msg: "Error fetching item" });
+  }
+};
+
+// ------------------------
 // GET ALL ITEMS
 // ------------------------
 exports.getAllItems = async (req, res) => {
   try {
-    const items = await Item.find();
+    const items = await Item.find({ status: 'active' });
 
     res.json({
       success: true,
@@ -46,27 +61,28 @@ exports.createItem = async (req, res) => {
     console.log("[CREATE ITEM] Request body:", req.body);
     console.log("[CREATE ITEM] Files:", req.files?.length || 0);
 
-    // Parse JSON fields from FormData
-    const itemData = {};
-    
-    // Handle all form fields
-    for (const key in req.body) {
-      const value = req.body[key];
-      // Try to parse JSON fields
-      if (typeof value === 'string' && (value.startsWith('[') || value.startsWith('{'))) {
-        try {
-          itemData[key] = JSON.parse(value);
-        } catch (e) {
-          itemData[key] = value;
-        }
-      } else {
-        itemData[key] = value;
-      }
+    // Manually construct itemData from req.body as multer might not populate it fully
+    const itemData = { ...req.body };
+
+    // Ensure owner is set from the authenticated user
+    itemData.owner = req.user.userId;
+
+    // Map itemName to title for consistency, as frontend uses itemName
+    if (itemData.itemName) {
+      itemData.title = itemData.itemName;
     }
 
-    // Map itemName to title
-    itemData.title = itemData.itemName || itemData.title;
-    itemData.owner = req.user.id;
+    // Manually parse fields that are sent as JSON strings
+    const fieldsToParse = ['unavailableDates', 'itemOptions'];
+    fieldsToParse.forEach(field => {
+      if (itemData[field] && typeof itemData[field] === 'string') {
+        try {
+          itemData[field] = JSON.parse(itemData[field]);
+        } catch (e) {
+          console.error(`Failed to parse ${field}:`, e);
+        }
+      }
+    });
 
     // Handle images
     if (req.files && req.files.length > 0) {
@@ -206,6 +222,28 @@ exports.deleteItem = async (req, res) => {
       msg: "Delete failed",
       message: err.message 
     });
+  }
+};
+
+// ------------------------
+// UPDATE ITEM STATUS
+// ------------------------
+exports.updateItemStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const updated = await Item.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true, runValidators: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, msg: "Item not found" });
+    }
+
+    res.json({ success: true, item: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, msg: "Status update failed" });
   }
 };
 

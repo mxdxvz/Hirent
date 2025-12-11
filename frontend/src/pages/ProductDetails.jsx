@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import Navbar from "../components/layouts/Navbar";
 import Sidebar from "../components/layouts/Sidebar";
 import Footer from "../components/layouts/Footer";
 import ImageGallery from "../components/product/ImageGallery";
 import ProductInfo from "../components/product/ProductInfo";
 import RelatedItems from "../components/product/RelatedItems";
+import { makeAPICall, ENDPOINTS } from "../config/api";
 import {
   Flag,
   X,
@@ -20,17 +22,6 @@ import {
   BadgeCheck,
 } from "lucide-react";
 
-// Import product images
-import havicGamepad from "../assets/product/havic_gamepad/havic_gamepad.png";
-import havicGamepad1 from "../assets/product/havic_gamepad/havic_gamepad1.png";
-import havicGamepad2 from "../assets/product/havic_gamepad/havic_gamepad2.png";
-import havicGamepad3 from "../assets/product/havic_gamepad/havic_gamepad3.png";
-
-// Import related product images
-import havitHv from "../assets/product/items/havit_hv.png";
-import keyboard from "../assets/product/items/Keyboard.png";
-import ipsLcd from "../assets/product/items/IPS_lcd.png";
-import rgbLiquid from "../assets/product/items/RGB_liquid_CPU.png";
 
 // -------------------------
 // REPORT MODAL COMPONENT
@@ -269,7 +260,7 @@ const OwnerSection = ({ owner, onReport }) => {
               {/* Avatar */}
               <div className="relative flex-shrink-0">
                 <img
-                  src={owner.avatar}
+                  src={owner.avatar || '/assets/default-avatar.png'}
                   alt={owner.name}
                   className="w-14 h-14 rounded-xl object-cover bg-gray-100"
                   onError={(e) => {
@@ -297,15 +288,12 @@ const OwnerSection = ({ owner, onReport }) => {
                 <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                   <div className="flex items-center gap-1">
                     <Star className="text-amber-400 fill-amber-400" size={12} />
-                    <span className="font-medium text-gray-900">
-                      {owner.rating}
-                    </span>
-                    <span>({owner.totalReviews})</span>
+                    <span className="font-medium text-gray-900">N/A</span>
                   </div>
                   <span className="text-gray-300">•</span>
                   <div className="flex items-center gap-1">
                     <MapPin size={12} />
-                    <span className="truncate">{owner.location}</span>
+                    <span className="truncate">{owner.city || 'N/A'}</span>
                   </div>
                 </div>
               </div>
@@ -314,21 +302,15 @@ const OwnerSection = ({ owner, onReport }) => {
             {/* Stats - Compact */}
             <div className="flex items-center gap-4 md:gap-6 py-3 md:py-0 md:px-6 md:border-l border-gray-100">
               <div className="text-center">
-                <p className="text-lg font-bold text-gray-900">
-                  {owner.totalListings}
-                </p>
+                <p className="text-lg font-bold text-gray-900">N/A</p>
                 <p className="text-xs text-gray-500">Listings</p>
               </div>
               <div className="text-center">
-                <p className="text-lg font-bold text-gray-900">
-                  {owner.totalRentals}
-                </p>
+                <p className="text-lg font-bold text-gray-900">N/A</p>
                 <p className="text-xs text-gray-500">Rentals</p>
               </div>
               <div className="text-center">
-                <p className="text-lg font-bold text-emerald-600">
-                  {owner.responseRate}%
-                </p>
+                <p className="text-lg font-bold text-emerald-600">N/A</p>
                 <p className="text-xs text-gray-500">Response</p>
               </div>
             </div>
@@ -356,11 +338,11 @@ const OwnerSection = ({ owner, onReport }) => {
           <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500">
             <div className="flex items-center gap-1.5">
               <Calendar size={12} />
-              <span>Joined {formatJoinDate(owner.joinDate)}</span>
+              <span>Joined {owner.createdAt ? formatJoinDate(owner.createdAt) : 'N/A'}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Clock size={12} />
-              <span>Responds in {owner.responseTime}</span>
+              <span>Response time: N/A</span>
             </div>
             <div className="hidden sm:flex items-center gap-3 ml-auto">
               <div className="flex items-center gap-1.5">
@@ -383,87 +365,24 @@ const OwnerSection = ({ owner, onReport }) => {
 // MAIN COMPONENT
 // -------------------------
 const ProductDetails = () => {
+  const { id } = useParams();
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportType, setReportType] = useState("product");
 
-  const owner = {
-    id: "owner-001",
-    name: "Juan Dela Cruz",
-    avatar: "/assets/avatars/juan_avatar.jpg",
-    rating: 4.8,
-    totalReviews: 127,
-    location: "Makati City, Metro Manila",
-    joinDate: "2022-03-15",
-    verified: true,
-    online: true,
-    totalListings: 24,
-    totalRentals: 156,
-    responseRate: 98,
-    responseTime: "< 1 hour",
-  };
-
-  const product = {
-    id: "havic-hv-g92-gamepad",
-    name: "Havic HV G-92 Gamepad",
-    rating: 4.5,
-    reviews: 150,
-    inStock: true,
-    quantity: 2,
-    price: 300.0,
-    originalPrice: 500.0,
-    description:
-      "PlayStation 5 Controller Skin High quality vinyl with air channel adhesive for easy, bubble free install & mess free removal Pressure sensitive.",
-    condition: "Brand New",
-    brand: "Havic",
-    model: "HV-G92",
-    platformCompatibility: "PC / PS3 / Android",
-    connectivity: "USB Wired",
-    includedAccessories: "Gamepad + USB Cable",
-    images: [havicGamepad, havicGamepad1, havicGamepad2, havicGamepad3],
-    owner: owner,
-  };
-
-  const relatedProducts = [
-    {
-      id: 1,
-      name: "HAVIT HV-G92 Gamepad",
-      price: 120,
-      originalPrice: 160,
-      rating: 5,
-      reviews: 88,
-      image: havitHv,
-      discount: 40,
-    },
-    {
-      id: 2,
-      name: "AK-900 Wired Keyboard",
-      price: 960,
-      originalPrice: 1160,
-      rating: 4,
-      reviews: 75,
-      image: keyboard,
-      discount: 35,
-    },
-    {
-      id: 3,
-      name: "IPS LCD Gaming Monitor",
-      price: 370,
-      originalPrice: 400,
-      rating: 5,
-      reviews: 99,
-      image: ipsLcd,
-      discount: 30,
-    },
-    {
-      id: 4,
-      name: "RGB liquid CPU Cooler",
-      price: 160,
-      originalPrice: 170,
-      rating: 4.5,
-      reviews: 65,
-      image: rgbLiquid,
-    },
-  ];
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const data = await makeAPICall(ENDPOINTS.ITEMS.GET_ONE(id));
+        setProduct(data.item);
+      } catch (error) {
+        console.error("Error fetching product:", error);
+      }
+      setLoading(false);
+    };
+    fetchProduct();
+  }, [id]);
 
   const handleReportProduct = () => {
     setReportType("product");
@@ -475,6 +394,50 @@ const ProductDetails = () => {
     setShowReportModal(true);
   };
 
+  const [wishlist, setWishlist] = useState([]);
+
+  useEffect(() => {
+    const loadWishlist = async () => {
+      try {
+        const data = await makeAPICall(ENDPOINTS.WISHLIST.GET);
+        setWishlist(data.map(item => item._id) || []);
+      } catch (err) {
+        console.error("Error loading wishlist:", err);
+      }
+    };
+    loadWishlist();
+  }, []);
+
+  const handleToggleWishlist = async (itemId) => {
+    try {
+      if (wishlist.includes(itemId)) {
+        await makeAPICall(ENDPOINTS.WISHLIST.REMOVE(itemId), { method: "DELETE" });
+        setWishlist((prev) => prev.filter((id) => id !== itemId));
+      } else {
+        await makeAPICall(ENDPOINTS.WISHLIST.ADD, {
+          method: "POST",
+          body: JSON.stringify({ itemId }),
+          headers: { "Content-Type": "application/json" },
+        });
+        setWishlist((prev) => [...prev, itemId]);
+      }
+    } catch (err) {
+      console.error("Wishlist update failed:", err);
+    }
+  };
+
+  const handleAddToCollection = async (item) => {
+    try {
+      await makeAPICall(ENDPOINTS.CART.ADD, {
+        method: "POST",
+        body: JSON.stringify({ itemId: item._id, quantity: 1 }),
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (err) {
+      console.error("Failed to add to cart:", err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -483,63 +446,50 @@ const ProductDetails = () => {
       </div>
 
       <div className="lg:ml-16 mt-10">
-        {/* Breadcrumb */}
-        <div className="px-4 sm:px-6 lg:pl-32 lg:pr-6 py-4">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-sm">
-              <a
-                href="/"
-                className="text-gray-400 hover:text-[#7A1CA9] transition"
-              >
-                Home
-              </a>
-              <span className="text-gray-300">/</span>
-              <a
-                href="/categories"
-                className="text-gray-400 hover:text-[#7A1CA9] transition"
-              >
-                Categories
-              </a>
-              <span className="text-gray-300">/</span>
-              <a
-                href="/gadgets"
-                className="text-gray-400 hover:text-[#7A1CA9] transition"
-              >
-                Gadgets
-              </a>
-              <span className="text-gray-300">/</span>
-              <span className="text-gray-900 font-medium truncate max-w-[150px] sm:max-w-[200px]">
-                {product.name}
-              </span>
+        {loading ? (
+          <div className="text-center py-20">Loading...</div>
+        ) : !product ? (
+          <div className="text-center py-20">Product not found.</div>
+        ) : (
+          <>
+            {/* Breadcrumb */}
+            <div className="px-4 sm:px-6 lg:pl-32 lg:pr-6 py-4">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-sm">
+                  <a href="/" className="text-gray-400 hover:text-[#7A1CA9] transition">Home</a>
+                  <span className="text-gray-300">/</span>
+                  <a href="/browse" className="text-gray-400 hover:text-[#7A1CA9] transition">Browse</a>
+                  <span className="text-gray-300">/</span>
+                  <a href={`/browse?category=${product.category}`} className="text-gray-400 hover:text-[#7A1CA9] transition">{product.category}</a>
+                  <span className="text-gray-300">/</span>
+                  <span className="text-gray-900 font-medium truncate max-w-[150px] sm:max-w-[200px]">
+                    {product.title}
+                  </span>
+                </div>
+                <button
+                  onClick={handleReportProduct}
+                  className="flex items-center gap-2 mr-8 px-3 py-2 bg-red-50 text-red-600 hover:text-red-700 hover:bg-red-100 rounded-lg transition-all text-sm"
+                >
+                  <Flag size={14} />
+                  <span className="font-medium">Report</span>
+                </button>
+              </div>
             </div>
 
-            <button
-              onClick={handleReportProduct}
-              className="flex items-center gap-2 mr-8 px-3 py-2 bg-red-50 text-red-600 hover:text-red-700 hover:bg-red-100 rounded-lg transition-all text-sm"
-            >
-              <Flag size={14} />
-              <span className="font-medium">Report</span>
-            </button>
-          </div>
-        </div>
+            {/* Product Section */}
+            <div className="px-4 sm:px-6 lg:pl-32 lg:pr-6 py-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
+                <ImageGallery images={product.images} />
+                <ProductInfo product={product} handleAddToCollection={handleAddToCollection} handleToggleWishlist={handleToggleWishlist} wishlist={wishlist} />
+              </div>
+            </div>
 
-        {/* Product Section */}
-        <div className="px-4 sm:px-6 lg:pl-32 lg:pr-6 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
-            <ImageGallery images={product.images} />
-            <ProductInfo product={product} />
-          </div>
-        </div>
+            {/* Compact Owner Section */}
+            {product.owner && <OwnerSection owner={product.owner} onReport={handleReportOwner} />}
 
-        {/* Compact Owner Section */}
-        <OwnerSection owner={owner} onReport={handleReportOwner} />
-
-        {/* Related Items */}
-        <div className="px-4 sm:px-6 lg:pl-32 lg:pr-6 py-8">
-          <RelatedItems products={relatedProducts} />
-        </div>
-
-        <Footer />
+            <Footer />
+          </>
+        )}
       </div>
 
       <ReportModal

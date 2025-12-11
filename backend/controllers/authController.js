@@ -1,6 +1,8 @@
 const User = require("../models/Users");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const { sendOwnerVerificationEmail, sendWelcomeEmail } = require("../services/emailService");
 
 // REGISTER
 const registerUser = async (req, res) => {
@@ -313,7 +315,7 @@ const googleAuth = async (req, res) => {
 // UPDATE PROFILE
 const updateProfile = async (req, res) => {
   try {
-    const userId = req.user.id; // from auth middleware
+    const userId = req.user.userId; // from auth middleware
     if (!userId) {
       return res
         .status(401)
@@ -321,37 +323,41 @@ const updateProfile = async (req, res) => {
     }
 
     const {
-      name,
-      phone,
-      address,
-      gender,
-      birthday,
-      bio,
-      currentPassword,
-      newPassword,
+      firstName = undefined,
+      lastName = undefined,
+      name = undefined,
+      phone = undefined,
+      address = undefined,
+      gender = undefined,
+      birthday = undefined,
+      bio = undefined,
+      currentPassword = undefined,
+      newPassword = undefined,
       // Owner setup fields
-      sellerType,
-      ownerAddress,
-      pickupAddress,
-      region,
-      regionName,
-      province,
-      provinceName,
-      city,
-      cityName,
-      barangay,
-      postalCode,
-      ownerSetupCompleted,
+      sellerType = undefined,
+      ownerAddress = undefined,
+      pickupAddress = undefined,
+      region = undefined,
+      regionName = undefined,
+      province = undefined,
+      provinceName = undefined,
+      city = undefined,
+      cityName = undefined,
+      barangay = undefined,
+      postalCode = undefined,
+      ownerSetupCompleted = undefined,
       // Business fields
-      businessName,
-      businessType,
-      taxId,
-      bankName,
-      accountNumber,
-      accountName,
-      ewalletProvider,
-      ewalletNumber,
-      ewalletName,
+      businessName = undefined,
+      businessType = undefined,
+      taxId = undefined,
+      bankName = undefined,
+      accountNumber = undefined,
+      accountName = undefined,
+      ewalletProvider = undefined,
+      ewalletNumber = undefined,
+      ewalletName = undefined,
+      zipCode = undefined,
+      avatar = undefined,
     } = req.body;
 
     // Find user
@@ -379,18 +385,31 @@ const updateProfile = async (req, res) => {
     if (req.file) {
       // Convert file buffer to base64
       user.avatar = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
-    } else if (req.body.avatar && req.body.avatar.startsWith('data:')) {
+    } else if (avatar && avatar.startsWith('data:')) {
       // Handle base64 avatar from FormData
-      user.avatar = req.body.avatar;
+      user.avatar = avatar;
     }
 
     // --- Update basic profile fields ---
-    if (name) user.name = name;
-    if (phone) user.phone = phone;
-    if (address) user.address = address;
-    if (gender) user.gender = gender;
-    if (birthday) user.birthday = birthday;
-    if (bio) user.bio = bio;
+    // Handle firstName/lastName or name
+    if (firstName !== undefined && firstName !== null && firstName !== '') {
+      const first = firstName || '';
+      const last = lastName || '';
+      user.name = `${first} ${last}`.trim();
+    } else if (lastName !== undefined && lastName !== null && lastName !== '') {
+      const first = firstName || '';
+      const last = lastName || '';
+      user.name = `${first} ${last}`.trim();
+    } else if (name !== undefined && name !== null && name !== '') {
+      user.name = name;
+    }
+    
+    if (phone !== undefined && phone !== null && phone !== '') user.phone = phone;
+    if (address !== undefined && address !== null && address !== '') user.address = address;
+    if (zipCode !== undefined && zipCode !== null && zipCode !== '') user.postalCode = zipCode;
+    if (gender !== undefined && gender !== null && gender !== '') user.gender = gender;
+    if (birthday !== undefined && birthday !== null && birthday !== '') user.birthday = birthday;
+    if (bio !== undefined && bio !== null && bio !== '') user.bio = bio;
 
     // --- Update owner setup fields ---
     if (sellerType) user.sellerType = sellerType;
@@ -470,10 +489,166 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// SEND OWNER VERIFICATION EMAIL
+const sendOwnerVerificationEmailEndpoint = async (req, res) => {
+  try {
+    console.log("[SEND VERIFICATION EMAIL] Request received");
+    const userId = req.user.userId; // from authMiddleware
+    if (!userId) {
+      console.error("[SEND VERIFICATION EMAIL] No userId found");
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+    }
+
+    console.log("[SEND VERIFICATION EMAIL] Finding user:", userId);
+    const user = await User.findById(userId);
+    if (!user) {
+      console.error("[SEND VERIFICATION EMAIL] User not found:", userId);
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    console.log("[SEND VERIFICATION EMAIL] User role:", user.role);
+    // Check if user is an owner
+    if (user.role !== "owner") {
+      console.error("[SEND VERIFICATION EMAIL] User is not an owner");
+      return res.status(403).json({
+        success: false,
+        message: "Only owners can request email verification",
+      });
+    }
+
+    // Generate verification token (24 hour expiry)
+    console.log("[SEND VERIFICATION EMAIL] Generating token");
+    const verificationToken = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+
+    // Store token in database
+    console.log("[SEND VERIFICATION EMAIL] Storing token in database");
+    user.emailVerificationToken = verificationToken;
+    user.emailVerificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    user.emailVerificationSentAt = new Date();
+    await user.save();
+
+    // Send verification email
+    console.log("[SEND VERIFICATION EMAIL] Sending email to:", user.email);
+    const emailSent = await sendOwnerVerificationEmail(
+      user.email,
+      verificationToken,
+      user.name
+    );
+
+    if (!emailSent) {
+      console.error("[SEND VERIFICATION EMAIL] Email sending failed");
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send verification email. Please try again.",
+      });
+    }
+
+    console.log("[SEND VERIFICATION EMAIL] Email sent successfully");
+    res.json({
+      success: true,
+      message: "Verification email sent successfully. Please check your inbox.",
+    });
+  } catch (err) {
+    console.error("[SEND VERIFICATION EMAIL] Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Error sending verification email: " + err.message,
+    });
+  }
+};
+
+// VERIFY OWNER EMAIL
+const verifyOwnerEmail = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Verification token is required",
+      });
+    }
+
+    // Verify JWT token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired verification token",
+      });
+    }
+
+    // Find user
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Check if token matches and hasn't expired
+    if (user.emailVerificationToken !== token) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid verification token",
+      });
+    }
+
+    if (user.emailVerificationTokenExpiry < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "Verification token has expired",
+      });
+    }
+
+    // Mark email as verified
+    user.emailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationTokenExpiry = null;
+    await user.save();
+
+    // Send welcome email
+    await sendWelcomeEmail(user.email, user.name);
+
+    res.json({
+      success: true,
+      message: "Email verified successfully! Your account is now active.",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        emailVerified: user.emailVerified,
+      },
+    });
+  } catch (err) {
+    console.error("[VERIFY EMAIL] Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Error verifying email: " + err.message,
+    });
+  }
+};
+
 // EXPORTS (must match your router!)
 module.exports = {
   registerUser,
   loginUser,
   googleAuth,
   updateProfile,
+  sendOwnerVerificationEmailEndpoint,
+  verifyOwnerEmail,
 };

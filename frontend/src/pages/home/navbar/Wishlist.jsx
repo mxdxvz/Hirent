@@ -82,9 +82,22 @@ const WishlistPage = () => {
   const removeFromWishlist = async (id) => {
     try {
       await makeAPICall(ENDPOINTS.WISHLIST.REMOVE(id), { method: "DELETE" });
-      setWishlistItems((prev) => prev.filter((item) => item.id !== id));
+      setWishlistItems((prev) => prev.filter((item) => item._id !== id));
     } catch (error) {
       console.error("Failed to remove item:", error);
+    }
+  };
+
+  const handleAddToCollection = async (item) => {
+    try {
+      await makeAPICall(ENDPOINTS.CART.ADD, {
+        method: "POST",
+        body: JSON.stringify({ itemId: item._id, quantity: 1 }),
+        headers: { "Content-Type": "application/json" },
+      });
+      // Optionally, you can add feedback to the user here
+    } catch (err) {
+      console.error("Failed to add to cart:", err);
     }
   };
 
@@ -183,12 +196,10 @@ const WishlistPage = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-3 gap-y-4 place-items-center">
                   {displayedItems.map((item) => (
                     <WishlistItemCard
-                      key={item.id}
+                      key={item._id}
                       item={item}
                       removeFromWishlist={removeFromWishlist}
-                      onAddToCollection={() =>
-                        console.log("Add to collection", item)
-                      }
+                      onAddToCollection={handleAddToCollection}
                     />
                   ))}
                 </div>

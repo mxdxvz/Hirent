@@ -56,6 +56,16 @@ const getProfile = async (req, res) => {
                 ewalletNumber: user.ewalletNumber,
                 ewalletName: user.ewalletName,
                 avatar: user.avatar,
+                // Owner setup fields
+                sellerType: user.sellerType,
+                ownerAddress: user.ownerAddress,
+                pickupAddress: user.pickupAddress,
+                region: user.region,
+                regionName: user.regionName,
+                province: user.province,
+                provinceName: user.provinceName,
+                cityName: user.cityName,
+                barangay: user.barangay,
                 // Verification Status
                 emailVerified: user.emailVerified || false,
                 phoneVerified: user.phoneVerified || false,
@@ -80,12 +90,38 @@ const updateProfile = async (req, res) => {
         
         const userId = req.user.userId;
         const {
-            firstName, lastName, email, phone, address, city, zipCode, country,
-            businessName, businessType, taxId,
-            bankName, accountNumber, accountName,
-            ewalletProvider, ewalletNumber, ewalletName,
-            sellerType, ownerAddress, pickupAddress, region, regionName, province, provinceName, barangay, postalCode,
-            gender, birthday, bio, avatar
+            firstName = undefined, 
+            lastName = undefined, 
+            email = undefined, 
+            phone = undefined, 
+            address = undefined, 
+            city = undefined, 
+            zipCode = undefined, 
+            country = undefined,
+            businessName = undefined, 
+            businessType = undefined, 
+            taxId = undefined,
+            bankName = undefined, 
+            accountNumber = undefined, 
+            accountName = undefined,
+            ewalletProvider = undefined, 
+            ewalletNumber = undefined, 
+            ewalletName = undefined,
+            sellerType = undefined, 
+            ownerAddress = undefined, 
+            pickupAddress = undefined, 
+            region = undefined, 
+            regionName = undefined, 
+            province = undefined, 
+            provinceName = undefined, 
+            cityName = undefined,
+            barangay = undefined, 
+            postalCode = undefined,
+            ownerSetupCompleted = undefined,
+            gender = undefined, 
+            birthday = undefined, 
+            bio = undefined, 
+            avatar = undefined
         } = req.body;
 
         // Build update object with only provided fields
@@ -130,8 +166,10 @@ const updateProfile = async (req, res) => {
         if (regionName !== undefined) updateData.regionName = regionName;
         if (province !== undefined) updateData.province = province;
         if (provinceName !== undefined) updateData.provinceName = provinceName;
+        if (cityName !== undefined) updateData.cityName = cityName;
         if (barangay !== undefined) updateData.barangay = barangay;
         if (postalCode !== undefined) updateData.postalCode = postalCode;
+        if (ownerSetupCompleted !== undefined) updateData.ownerSetupCompleted = ownerSetupCompleted;
 
         // Handle avatar upload if file exists or base64 string provided
         if (req.file) {

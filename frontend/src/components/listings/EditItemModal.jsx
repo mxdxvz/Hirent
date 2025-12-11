@@ -1,16 +1,27 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ENDPOINTS } from "../../config/api";
 
 export default function EditItemModal({ open, onClose, item, onSave }) {
   const [formData, setFormData] = useState({
-    title: item?.title || "",
-    description: item?.description || "",
-    pricePerDay: item?.pricePerDay || "",
-    category: item?.category || "",
+    title: "",
+    description: "",
+    pricePerDay: "",
+    category: "",
   });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (item) {
+      setFormData({
+        title: item.title || "",
+        description: item.description || "",
+        pricePerDay: item.pricePerDay || "",
+        category: item.category || "",
+      });
+    }
+  }, [item]);
 
   if (!item) return null;
 
@@ -107,6 +118,16 @@ export default function EditItemModal({ open, onClose, item, onSave }) {
                   value={formData.description}
                   onChange={handleChange}
                 ></textarea>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Category</label>
+                <input
+                  type="text"
+                  name="category"
+                  className="w-full border rounded-lg px-3 py-2 mt-1"
+                  value={formData.category}
+                  onChange={handleChange}
+                />
               </div>
             </div>
 

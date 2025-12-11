@@ -2,61 +2,38 @@ import React from "react";
 import { MapPin, Calendar, ShoppingBag } from "lucide-react";
 
 const WishlistItemCard = ({ item, removeFromWishlist, onAddToCollection }) => {
+  if (!item) return null;
+
   return (
-    <div className="relative rounded-2xl shadow-sm hover:shadow-lg p-3 transition-all bg-white text-purple-900 w-full max-w-[270px]">
-      {/* Remove Button */}
-      <button
-        onClick={() => removeFromWishlist(item.id)}
-        className="absolute top-1 right-1 shadow-md text-red-500 hover:text-red-700 px-2 py-1 text-[13px] font-medium border border-red-300 rounded-full bg-white z-20"
-      >
-        Remove
-      </button>
-
-      {/* Image */}
-      <div className="relative w-full h-40 bg-gray-100 mx-auto rounded-xl mb-3 flex items-center justify-center overflow-hidden text-purple-900">
-        <img
-          src={item.image}
-          className="max-h-full max-w-full object-contain transition-all duration-300 hover:scale-105"
-        />
-
-        {item.featured && (
-          <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs px-3 py-1 rounded-full">
-            Featured
-          </div>
-        )}
-        {item.sale && (
-          <div className="absolute top-3 left-3 bg-red-600 text-white text-xs px-3 py-1 rounded-full">
-            Sale
-          </div>
-        )}
-      </div>
-
-      {/* Info */}
-      <div>
-        <h3 className="font-bold text-[15px]">{item.name}</h3>
-        <p className="text-[13px] text-gray-500 mb-2">by {item.owner}</p>
-
-        <div className="flex items-center gap-1 text-gray-600 text-[13px] mb-1">
-          <MapPin size={15} />
-          {item.location}
+    <div className="bg-white rounded-2xl shadow-sm p-3 w-full max-w-[220px]">
+      <div className="relative mb-2">
+        <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden">
+          <img src={item.images?.[0] || '/placeholder.png'} alt={item.title} className="w-full h-full object-cover" />
         </div>
-
-        <div className="flex items-center gap-1 text-gray-600 text-[13px] mb-3">
-          <Calendar size={15} />
-          {item.daysAvailable || item.days || item.availableDays} days available
-        </div>
-
-        <p className="text-[#7A1CA9] font-bold text-[18px] mb-4">{item.price}</p>
-
-        {/* Add to collection */}
-        <button
-          onClick={() => onAddToCollection(item)}
-          className="w-full bg-[#7A1CA9] px-3 py-2 text-[13px] text-white border rounded-full hover:bg-purple-700 transition flex items-center justify-center gap-2"
+        <button 
+          onClick={() => removeFromWishlist(item._id)}
+          className="absolute top-2 right-2 text-xs bg-white text-red-500 border border-red-200 rounded-full px-2 py-0.5 hover:bg-red-50 transition"
         >
-          <ShoppingBag className="w-4 h-4" />
-          Add to collection
+          Remove
         </button>
       </div>
+      <p className="text-sm font-semibold text-gray-800 truncate mb-1">{item.title}</p>
+      <p className="text-xs text-gray-500 mb-1">by {item.owner.name || 'Unknown'}</p>
+      <div className="flex items-center gap-2 mb-1">
+        <MapPin size={14} className="text-gray-400" />
+        <span className="text-xs text-gray-600">{item.location}</span>
+      </div>
+      <div className="flex items-center gap-2 mb-3">
+        <Calendar size={14} className="text-gray-400" />
+        <span className="text-xs text-gray-600">{item.availabilityType === 'always' ? 'Always available' : 'Specific dates'}</span>
+      </div>
+      <button 
+        onClick={() => onAddToCollection(item)}
+        className="w-full bg-[#7A1CA9] text-white text-sm py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-[#6a1894] transition"
+      >
+        <ShoppingBag size={16} />
+        Add to collection
+      </button>
     </div>
   );
 };
