@@ -153,6 +153,12 @@ app.use("/api/cart", require("./routes/cartRoutes"));
 // Booking Routes
 app.use("/api/bookings", require("./routes/bookingRoutes"));
 
+// Message Routes
+app.use("/api/messages", require("./routes/messageRoutes"));
+
+// User Search Routes
+app.use("/api/search-users", require("./routes/userSearchRoutes"));
+
 // Root Test Route
 app.get("/", (req, res) => {
   res.send("API is running...");
@@ -167,7 +173,39 @@ app.use(errorHandler);
 // Start Server
 // -------------------------
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
+const http = require('http');
+const { Server } = require("socket.io");
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"]
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('a user connected', socket.id);
+
+  // Handle joining a room
+  socket.on('join', (userId) => {
+    socket.join(userId);
+    console.log(`User ${userId} joined their room`);
+  });
+
+  // Handle sending a message
+  socket.on('message:send', ({ conversationId, senderId, receiverId, text }) => {
+    // When a message is sent, emit it to the receiver's room
+    io.to(receiverId).emit('message:receive', { conversationId, senderId, text });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected', socket.id);
+  });
+});
+
+server.listen(PORT, () => {
   console.log(`\n✅ EXPRESS SERVER RUNNING on port ${PORT}`);
   console.log('📍 API available at: http://localhost:' + PORT);
   console.log('\n⏳ Database connection status:', mongoConnected ? '✅ CONNECTED' : '⏳ CONNECTING...');

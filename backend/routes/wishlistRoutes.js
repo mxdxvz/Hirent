@@ -59,7 +59,10 @@ router.get("/", auth, async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const wishlist = await Wishlist.findOne({ userId }).populate('items');
+    const wishlist = await Wishlist.findOne({ userId }).populate({
+      path: 'items',
+      populate: { path: 'owner', select: 'name' }
+    });
     
     if (!wishlist) {
       return res.json([]);
