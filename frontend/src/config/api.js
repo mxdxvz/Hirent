@@ -3,7 +3,7 @@
 // =============================================
 
 // Base API URL
-export const API_URL = "https://hirent-yw32.onrender.com/api";
+export const API_URL = "https://hirent-3.onrender.com/api";
 
 // IMPORTANT — all endpoints must start with /api
 const API_PREFIX = "/api";

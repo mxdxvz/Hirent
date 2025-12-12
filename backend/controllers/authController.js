@@ -234,7 +234,7 @@ const googleAuth = async (req, res) => {
         "[GOOGLE AUTH] User exists as renter, cannot sign up as owner"
       );
       return res.redirect(
-        `${process.env.FRONTEND_URL}/login?error=${encodeURIComponent(
+        `${"http://localhost:3000"}/login?error=${encodeURIComponent(
           "You already have an account as a renter. Please login."
         )}`
       );
@@ -326,7 +326,7 @@ const googleAuth = async (req, res) => {
     };
 
     // Redirect frontend
-    const redirectUrl = `${process.env.FRONTEND_URL}/auth-callback?token=${token}&user=${encodeURIComponent(
+    const redirectUrl = `${"http://localhost:3000"}/auth-callback?token=${token}&user=${encodeURIComponent(
       JSON.stringify(userResponse)
     )}`;
     console.log("[GOOGLE AUTH] Redirecting to:", redirectUrl);
@@ -334,7 +334,7 @@ const googleAuth = async (req, res) => {
   } catch (err) {
     console.error("[GOOGLE AUTH] Error:", err.message);
     res.redirect(
-      `${process.env.FRONTEND_URL}/signup?error=${encodeURIComponent(
+      `${"http://localhost:3000"}/signup?error=${encodeURIComponent(
         "Google authentication failed: " + err.message
       )}`
     );

@@ -35,7 +35,7 @@ export default function EditItemModal({ open, onClose, item, onSave }) {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `https://hirent-yw32.onrender.com/api/${ENDPOINTS.ITEMS.UPDATE(item._id)}`,
+        `https://hirent-3.onrender.com/api/${ENDPOINTS.ITEMS.UPDATE(item._id)}`,
         {
           method: "PUT",
           headers: {

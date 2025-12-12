@@ -25,7 +25,7 @@ const VerifyEmail = () => {
 
         console.log("[VerifyEmail] Verifying with token...");
 
-        const response = await fetch("https://hirent-yw32.onrender.com/api/auth/verify-email", {
+        const response = await fetch("https://hirent-3.onrender.com/api/auth/verify-email", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

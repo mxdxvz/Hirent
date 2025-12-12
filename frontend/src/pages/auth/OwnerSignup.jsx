@@ -103,7 +103,7 @@ const OwnerSignup = () => {
   // GOOGLE SIGNUP BUTTON → Owner
   // -------------------------------
   const handleGoogleSignup = () => {
-    window.location.href = "https://hirent-yw32.onrender.com/api/auth/google/owner";
+    window.location.href = "https://hirent-3.onrender.com/api/auth/google/owner";
   };
 
   return (

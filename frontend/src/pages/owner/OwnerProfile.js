@@ -64,7 +64,7 @@ export default function Profile() {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        const res = await fetch("https://hirent-yw32.onrender.com/api/users/me", {
+        const res = await fetch("https://hirent-3.onrender.com/api/users/me", {
           headers: { Authorization: `Bearer ${token}` },
           credentials: "include",
         });
@@ -129,7 +129,7 @@ export default function Profile() {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        const res = await fetch("https://hirent-yw32.onrender.com/api/owners/stats", {
+        const res = await fetch("https://hirent-3.onrender.com/api/owners/stats", {
           headers: { Authorization: `Bearer ${token}` },
           credentials: "include",
         });
@@ -161,7 +161,7 @@ export default function Profile() {
       // TODO: Backend - Send email with verification link containing token
       // TODO: Backend - Verification link format: {FRONTEND_URL}/verify-email?token={token}
       
-      const response = await fetch("https://hirent-yw32.onrender.com/api/send-verification-email", {
+      const response = await fetch("https://hirent-3.onrender.com/api/send-verification-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -209,7 +209,7 @@ export default function Profile() {
       // TODO: Backend - Send SMS with verification code using Twilio or similar
       // TODO: Backend - Store code with 10-minute expiry
       
-      const response = await fetch("https://hirent-yw32.onrender.com/api/users/send-phone-verification", {
+      const response = await fetch("https://hirent-3.onrender.com/api/users/send-phone-verification", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -258,7 +258,7 @@ export default function Profile() {
       // TODO: Backend - Save document URL to user.idDocumentUrl
       // TODO: Backend - Set idVerificationStatus to 'pending'
       
-      const response = await fetch("https://hirent-yw32.onrender.com/api/users/upload-id-document", {
+      const response = await fetch("https://hirent-3.onrender.com/api/users/upload-id-document", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -312,7 +312,7 @@ export default function Profile() {
         return;
       }
 
-      const response = await fetch("https://hirent-yw32.onrender.com/api/api/auth/profile", {
+      const response = await fetch("https://hirent-3.onrender.com/api/api/auth/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
