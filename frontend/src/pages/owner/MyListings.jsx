@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import OwnerSidebar from "../../components/layouts/OwnerSidebar";
 import { makeAPICall, ENDPOINTS } from "../../config/api";
+import { API_URL } from "../../config/api";
 
 import {
   Search,
@@ -62,7 +63,7 @@ const MyListings = () => {
     try {
       const newStatus = item.status === "active" ? "inactive" : "active";
       const token = localStorage.getItem("token");
-      await fetch(`https://hirent-3.onrender.com/api/items/${item._id}/status`, {
+      await fetch(`${API_URL}/items/${item._id}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status: newStatus }),
         headers: {
@@ -94,7 +95,7 @@ const MyListings = () => {
       }
 
       const token = localStorage.getItem("token");
-      const response = await fetch(`https://hirent-3.onrender.com/api/${ENDPOINTS.ITEMS.CREATE}`, {
+      const response = await fetch(`${API_URL}${ENDPOINTS.ITEMS.CREATE}`, {
         method: "POST",
         body: formData,
         headers: {

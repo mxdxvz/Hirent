@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { makeAPICall, ENDPOINTS } from "../../config/api"; // ✓ Use centralized API
+import { API_URL } from "../../config/api";
 
 const OwnerSignup = () => {
   const navigate = useNavigate();
@@ -103,7 +104,7 @@ const OwnerSignup = () => {
   // GOOGLE SIGNUP BUTTON → Owner
   // -------------------------------
   const handleGoogleSignup = () => {
-    window.location.href = "https://hirent-3.onrender.com/api/auth/google/owner";
+    window.location.href = `${API_URL}/auth/google/owner`;
   };
 
   return (

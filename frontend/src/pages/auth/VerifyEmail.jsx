@@ -4,6 +4,7 @@ import { CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/soli
 import logo from "../../assets/logo.png";
 import bg from "../../assets/auth-owner-bg.jpg";
 import Footer from "../../components/layouts/Footer";
+import { API_URL } from "../../config/api";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
@@ -25,7 +26,7 @@ const VerifyEmail = () => {
 
         console.log("[VerifyEmail] Verifying with token...");
 
-        const response = await fetch("https://hirent-3.onrender.com/api/auth/verify-email", {
+        const response = await fetch(`${API_URL}/auth/verify-email`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

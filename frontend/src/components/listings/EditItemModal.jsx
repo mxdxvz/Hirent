@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ENDPOINTS } from "../../config/api";
+import { API_URL } from "../../config/api";
 
 export default function EditItemModal({ open, onClose, item, onSave }) {
   const [formData, setFormData] = useState({
@@ -35,7 +36,7 @@ export default function EditItemModal({ open, onClose, item, onSave }) {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `https://hirent-3.onrender.com/api/${ENDPOINTS.ITEMS.UPDATE(item._id)}`,
+        `${API_URL}${ENDPOINTS.ITEMS.UPDATE(item._id)}`,
         {
           method: "PUT",
           headers: {

@@ -121,8 +121,8 @@ const AuthForm = ({ mode }) => {
   const handleGoogleAuth = () => {
   // For renter login/signup
   const googleUrl = mode === "signup"
-    ? `${process.env.REACT_APP_API_URL}/api/auth/google`
-    : `${process.env.REACT_APP_API_URL}/api/auth/google`;
+    ? `${process.env.REACT_APP_API_URL}/auth/google`
+    : `${process.env.REACT_APP_API_URL}/auth/google`;
 
   window.location.href = googleUrl;
 };

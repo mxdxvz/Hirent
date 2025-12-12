@@ -3,7 +3,7 @@
 // =============================================
 
 // Base API URL
-export const API_URL = "https://hirent-3.onrender.com/api";
+export const API_URL = process.env.REACT_APP_API_URL;
 
 // IMPORTANT — all endpoints must start with /api
 const API_PREFIX = "/api";
@@ -19,7 +19,7 @@ export const ENDPOINTS = {
     REGISTER: `${API_PREFIX}/auth/register`,
     LOGIN: `${API_PREFIX}/auth/login`,
     GOOGLE: `${API_PREFIX}/auth/google`,
-    GOOGLE_CALLBACK: `${API_PREFIX}/api/auth/google/callback`,
+    GOOGLE_CALLBACK: `${API_PREFIX}/auth/google/callback`,
     PROFILE: `${API_PREFIX}/auth/profile`,
   },
 

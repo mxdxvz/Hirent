@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { AuthContext } from "../../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../../config/api";
 
 import PersonalInformation from "../../../components/profilepage/Personal";
 import { AddressesComponent } from "../../../components/profilepage/Addresses";
@@ -79,7 +80,7 @@ export default function RenterProfilePage() {
         const token = localStorage.getItem("token");
 
         // Fetch Addresses
-        const addrRes = await fetch("https://hirent-3.onrender.com/api/users/addresses", {
+        const addrRes = await fetch(`${API_URL}/users/addresses`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (addrRes.ok) {
@@ -88,7 +89,7 @@ export default function RenterProfilePage() {
         }
 
         // Fetch Payment Methods
-        const payRes = await fetch("https://hirent-3.onrender.com/api/users/payment-methods", {
+        const payRes = await fetch(`${API_URL}/users/payment-methods`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (payRes.ok) {
@@ -125,7 +126,7 @@ export default function RenterProfilePage() {
         return;
       }
 
-      const response = await fetch("https://hirent-3.onrender.com/api/users/profile", {
+      const response = await fetch(`${API_URL}/users/profile`,  {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
