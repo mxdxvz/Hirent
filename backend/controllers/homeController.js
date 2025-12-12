@@ -1,11 +1,11 @@
 const Users = require('../models/Users');
-const Wishlist = require('../models/Wishlist');
+const Wishlist = require("../models/wishlist.model");
 const Items = require('../models/Items');
 const Location = require('../models/Location');
 
 exports.getPersonalizedHome = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     // 1. Get user profile
     const user = await Users.findById(userId).select('location categoryPreferences recentlyViewed');

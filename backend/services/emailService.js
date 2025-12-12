@@ -46,7 +46,7 @@ const sendOwnerVerificationEmail = async (email, verificationToken, ownerName = 
       return false;
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://hirenttttttt.netlify.app';
     const verificationLink = `${frontendUrl}/verify-email?token=${verificationToken}`;
 
     const htmlContent = `

@@ -1,19 +1,20 @@
-import React, { useContext, useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 
 /**
- * GoogleCallback - Handles the redirect from Google OAuth
- * Extracts token and user data from the URL query parameters
+ * GoogleCallback - Handles redirect from Google OAuth
+ * Ensures existing users' roles are never overwritten
+ * Redirects renter trying to sign up as owner to /login with error
  */
 const GoogleCallback = () => {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
   const [searchParams] = useSearchParams();
-  const processedRef = useRef(false); // Prevent multiple executions
+  const processedRef = useRef(false);
+  const [message, setMessage] = useState("Signing you in with Google...");
 
   useEffect(() => {
-    // Prevent running effect multiple times in StrictMode
     if (processedRef.current) return;
     processedRef.current = true;
 
@@ -23,75 +24,68 @@ const GoogleCallback = () => {
         const userParam = searchParams.get("user");
         const error = searchParams.get("error");
 
-        if (error) {
-          throw new Error(decodeURIComponent(error));
+        if (error) throw new Error(decodeURIComponent(error));
+        if (!token) throw new Error("Missing authentication token");
+
+        let userData = null;
+        if (userParam) {
+          try {
+            userData = JSON.parse(decodeURIComponent(userParam));
+          } catch (err) {
+            console.error("Error parsing user data:", err);
+          }
         }
 
-        if (token) {
-          let userData = null;
-          
-          if (userParam) {
-            try {
-              userData = JSON.parse(decodeURIComponent(userParam));
-            } catch (parseErr) {
-              console.error("Error parsing user data:", parseErr);
-            }
-          }
-
-          login(token, userData);
-
+        // Handle special case: renter trying to sign up as owner
+        if (userData?.role === "renter" && userData?.isNewUser === false && searchParams.get("state") === "owner") {
+          setMessage("Your account is registered as a renter. Redirecting to login...");
           setTimeout(() => {
-            const userRole = userData?.role || 'renter';
-            
-            // If new user (not previously in DB), redirect to appropriate signup
-            if (userData?.isNewUser) {
-              console.log("[GoogleCallback] New user detected, redirecting to signup");
-              if (userRole === 'owner') {
-                // New owner - redirect to OwnerSetup to complete profile
-                navigate('/ownersetup', { 
-                  replace: true,
-                  state: { 
-                    googleData: userData,
-                    message: "Complete your owner profile"
-                  }
-                });
+            navigate("/login", {
+              replace: true,
+              state: { error: "You already have an account as a renter. Please login." },
+            });
+          }, 2000);
+          return;
+        }
+
+        // Log user in
+        login(token, userData);
+
+        // Redirect after login
+        setTimeout(() => {
+          if (userData?.isNewUser) {
+            // New users navigate based on role
+            if (userData.role === "owner") {
+              navigate("/ownersetup", {
+                replace: true,
+                state: { googleData: userData, message: "Complete your owner profile" },
+              });
+            } else {
+              navigate("/signup", {
+                replace: true,
+                state: { googleData: userData, message: "Complete your profile" },
+              });
+            }
+          } else {
+            // Existing users: redirect strictly based on backend role
+            if (userData.role === "owner") {
+              if (!userData?.ownerSetupCompleted) {
+                navigate("/ownersetup", { replace: true });
               } else {
-                navigate('/signup', { 
-                  replace: true,
-                  state: { 
-                    googleData: userData,
-                    message: "Complete your profile"
-                  }
-                });
+                navigate("/owner/dashboard", { replace: true });
               }
             } else {
-              // Existing user - redirect based on role
-              if (userRole === 'owner') {
-                // Check if owner has completed setup
-                const ownerSetupCompleted = userData?.ownerSetupCompleted;
-                if (!ownerSetupCompleted) {
-                  // Owner hasn't completed setup yet - redirect back to setup
-                  console.log("[GoogleCallback] Owner setup incomplete, redirecting to setup");
-                  navigate('/ownersetup', { replace: true });
-                } else {
-                  navigate('/owner/dashboard', { replace: true });
-                }
-              } else {
-                navigate('/', { replace: true });
-              }
+              // Renter (existing) - always go to home
+              navigate("/", { replace: true });
             }
-          }, 100);
-        } else {
-          throw new Error("Missing authentication token");
-        }
+          }
+        }, 100);
       } catch (err) {
         console.error("Google callback error:", err);
-        
-        // Redirect to signup with error message
-        navigate("/signup", {
-          replace: true,
-          state: { error: err.message },
-        });
+        setMessage(err.message);
+        setTimeout(() => {
+          navigate("/login", { replace: true, state: { error: err.message } });
+        }, 2000);
       }
     };
 
@@ -108,13 +102,13 @@ const GoogleCallback = () => {
             className="w-16 h-16 mx-auto animate-pulse"
           />
         </div>
-        <p className="text-lg font-semibold text-gray-700 mb-4">
-          Signing you in with Google...
-        </p>
+        <p className="text-lg font-semibold text-gray-700 mb-4">{message}</p>
         <div className="flex justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
         </div>
-        <p className="text-sm text-gray-500 mt-4">Please wait while we complete your authentication</p>
+        <p className="text-sm text-gray-500 mt-4">
+          Please wait while we complete your authentication
+        </p>
       </div>
     </div>
   );

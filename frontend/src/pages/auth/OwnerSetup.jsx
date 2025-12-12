@@ -70,7 +70,7 @@ const OwnerSetup = () => {
       console.log("[OwnerSetup] Saving data with token:", token ? "present" : "missing");
       
       // Save to backend
-      const response = await fetch("http://localhost:5000/api/auth/profile", {
+     const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -255,7 +255,7 @@ const OwnerSetup = () => {
           console.log("[OwnerSetup] Starting setup completion with token...");
 
           // Mark setup as completed in backend with all form data
-          const response = await fetch("http://localhost:5000/api/auth/profile", {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/profile`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
@@ -299,7 +299,7 @@ const OwnerSetup = () => {
             
             // Send verification email
             try {
-              const emailResponse = await fetch("http://localhost:5000/api/auth/send-verification-email", {
+              const emailResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/send-verification-email`, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",

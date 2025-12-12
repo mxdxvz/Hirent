@@ -6,6 +6,7 @@ import {
   CircleCheckBig,
   Clock,
   CalendarOff,
+  MapPin,
 } from "lucide-react";
 
 const CollectionCard = ({
@@ -15,6 +16,12 @@ const CollectionCard = ({
   handleRemoveItem,
   navigate,
 }) => {
+  const handleActionClick = (e, action) => {
+    e.preventDefault();
+    e.stopPropagation();
+    action();
+  };
+
   return (
     <div
       key={item._id}
@@ -22,7 +29,7 @@ const CollectionCard = ({
     >
       <div className="flex gap-6 relative">
         <img
-          src={item.itemId.images?.[0] || '/placeholder.png'}
+          src={item.itemId.images?.[0] || "/placeholder.png"}
           className="w-36 h-36 bg-gray-100 object-contain rounded-xl"
         />
 
@@ -31,8 +38,14 @@ const CollectionCard = ({
             <h2 className="font-semibold text-[16px]">{item.itemId.title}</h2>
 
             <div className="text-[13px] mt-1 text-gray-700">
-              <div className="flex items-center gap-1">
-                Listed by {item.itemId.owner?.name || 'Unknown'}
+              <div className="flex justify-start items-center text-[13px] text-gray-700 mt-1">
+                <span>Listed by {item.itemId.owner?.name || "Unknown"}</span>
+
+                <span className="flex items-center ml-4 gap-1 text-[13px] text-gray-600">
+                  <MapPin size={14} className="text-gray-400" />
+                  {item.itemId.zone}, {item.itemId.location},{" "}
+                  {item.itemId.province}
+                </span>
               </div>
 
               {/* STATUS BADGE */}
@@ -45,7 +58,9 @@ const CollectionCard = ({
                     : "bg-gray-200 text-gray-700"
                 }`}
               >
-                {item.status === "approved" && <CircleCheckBig className="w-3 h-3" />}
+                {item.status === "approved" && (
+                  <CircleCheckBig className="w-3 h-3" />
+                )}
                 {item.status === "pending" && <Clock className="w-3 h-3" />}
                 {item.status !== "approved" && item.status !== "pending" && (
                   <CalendarOff className="w-3 h-3" />
@@ -78,9 +93,14 @@ const CollectionCard = ({
                   )}
 
                   {item.status !== "approved" && item.status !== "pending" && (
-                    <div className="flex items-center gap-1 text-gray-800 text-[13px] mb-3">
+                    <div className="flex items-center gap-1 text-gray-800 text-sm mb-3">
                       <Calendar size={15} />
-                      {item.daysAvailable || item.days || item.availableDays} days
+                      {item.itemId.minimumRentalDays &&
+                      item.itemId.maximumRentalDays
+                        ? `${item.itemId.minimumRentalDays} - ${item.itemId.maximumRentalDays} days`
+                        : item.daysAvailable ||
+                          item.days ||
+                          item.availableDays}{" "}
                       available
                     </div>
                   )}
@@ -112,29 +132,30 @@ const CollectionCard = ({
                     ₱{item.itemId.pricePerDay || 0}/day
                   </span>
 
-                  {(item.status === "approved" || item.status === "pending") && (() => {
-                    const itemTotals = calculateItemTotal(item);
-                    const totalWithDeposit =
-                      itemTotals.total + (item.securityDeposit || 0);
+                  {(item.status === "approved" || item.status === "pending") &&
+                    (() => {
+                      const itemTotals = calculateItemTotal(item);
+                      const totalWithDeposit =
+                        itemTotals.total + (item.securityDeposit || 0);
 
-                    return (
-                      <div className="flex justify-between w-full text-[13px] gap-1">
-                        <span className="text-gray-500">
-                          Subtotal{" "}
-                          <span className="text-gray-900">
-                            ₱{itemTotals.subtotal}
+                      return (
+                        <div className="flex justify-between w-full text-[13px] gap-1">
+                          <span className="text-gray-500">
+                            Subtotal{" "}
+                            <span className="text-gray-900">
+                              ₱{itemTotals.subtotal}
+                            </span>
                           </span>
-                        </span>
 
-                        <span className="text-gray-500">
-                          Total{" "}
-                          <span className="font-semibold text-gray-900">
-                            ₱{totalWithDeposit}
+                          <span className="text-gray-500">
+                            Total{" "}
+                            <span className="font-semibold text-gray-900">
+                              ₱{totalWithDeposit}
+                            </span>
                           </span>
-                        </span>
-                      </div>
-                    );
-                  })()}
+                        </div>
+                      );
+                    })()}
                 </div>
               </div>
             </div>
@@ -144,7 +165,7 @@ const CollectionCard = ({
           <div className="absolute bottom-1 right-0 flex items-center gap-1.5">
             {item.status === "approved" || item.status === "pending" ? (
               <button
-                onClick={() => openCancelModal(item._id) }
+                onClick={() => openCancelModal(item._id)}
                 className="px-3 py-1.5 text-[12.5px] shadow-sm rounded-full text-red-500 border border-red-300 bg-red-50 hover:bg-red-100"
               >
                 Cancel Booking
@@ -174,7 +195,11 @@ const CollectionCard = ({
               </button>
             ) : (
               <button
-                onClick={() => navigate(`/booking/${item._id}`)}
+                onClick={(e) =>
+                  handleActionClick(e, () =>
+                    navigate(`/booking/${item.itemId._id}`)
+                  )
+                }
                 className="px-3 py-1.5 text-[12.5px] shadow-sm bg-[#7A1CA9] text-white rounded-full hover:bg-purple-800"
               >
                 Continue to Booking

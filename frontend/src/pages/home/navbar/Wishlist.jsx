@@ -9,7 +9,9 @@ import emptyItems from "../../../assets/empty-listings.png";
 import { ENDPOINTS, makeAPICall } from "../../../config/api";
 
 const WishlistPage = () => {
-  const { wishlist, toggleWishlist, addToCart, isInitialized } = useContext(AuthContext);
+  const { wishlist, toggleWishlist, addToCart } = useContext(AuthContext);
+  const [localWishlist, setLocalWishlist] = useState([]);
+  const [justAdded, setJustAdded] = useState([]);
   const [filter, setFilter] = useState("All");
   const [sortOrder, setSortOrder] = useState("latest");
 
@@ -66,7 +68,34 @@ const WishlistPage = () => {
     });
 
   const handleAddToCollection = async (item) => {
-    await addToCart(item, 1);
+    try {
+      await addToCart(item, 1);
+      setJustAdded((prev) => [...prev, item._id]);
+      setTimeout(() => {
+        setJustAdded((prev) => prev.filter((id) => id !== item._id));
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to add to cart:", err);
+    }
+  };
+
+  useEffect(() => {
+    setLocalWishlist(wishlist || []);
+  }, [wishlist]);
+
+  const handleRemoveItem = async (item) => {
+    if (!item) return;
+
+    // Optimistic UI update
+    setLocalWishlist((prev) => prev.filter((i) => i._id !== item._id));
+
+    try {
+      await toggleWishlist(item); // Calls the context function
+    } catch (err) {
+      console.error("Failed to remove from wishlist:", err);
+      // Revert UI if API fails
+      setLocalWishlist(wishlist);
+    }
   };
 
   const hasWishlistItems = wishlist.length > 0;
@@ -124,7 +153,9 @@ const WishlistPage = () => {
                   <div className="ml-auto mt-4">
                     <SortDropdown
                       options={["Latest", "Oldest"]}
-                      onSortChange={(value) => setSortOrder(value.toLowerCase())}
+                      onSortChange={(value) =>
+                        setSortOrder(value.toLowerCase())
+                      }
                     />
                   </div>
                 </div>
@@ -166,8 +197,9 @@ const WishlistPage = () => {
                     <WishlistItemCard
                       key={item._id}
                       item={item}
-                      removeFromWishlist={toggleWishlist}
-                      onAddToCollection={handleAddToCollection}
+                      removeFromWishlist={() => handleRemoveItem(item)}
+                      handleAddToCollection={() => handleAddToCollection(item)}
+                      justAdded={justAdded}
                     />
                   ))}
                 </div>

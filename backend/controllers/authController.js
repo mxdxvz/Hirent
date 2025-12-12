@@ -2,7 +2,10 @@ const User = require("../models/Users");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const { sendOwnerVerificationEmail, sendWelcomeEmail } = require("../services/emailService");
+const {
+  sendOwnerVerificationEmail,
+  sendWelcomeEmail,
+} = require("../services/emailService");
 
 // REGISTER
 const registerUser = async (req, res) => {
@@ -28,8 +31,28 @@ const registerUser = async (req, res) => {
 
     console.log("[REGISTER] Checking if user exists:", email);
     let user = await User.findOne({ email });
+
     if (user) {
       console.log("[REGISTER] User already exists:", email);
+
+      // Check if this is owner signup
+      const isOwnerSignup =
+        req.originalUrl.includes("/ownersignup") || role === "owner";
+
+      if (isOwnerSignup) {
+        if (user.role === "renter") {
+          return res.status(400).json({
+            success: false,
+            message: "Email already registered as a Renter",
+          });
+        } else if (user.role === "owner") {
+          return res.status(400).json({
+            success: false,
+            message: "Email already registered as an Owner",
+          });
+        }
+      }
+      // Default existing user response
       return res.status(400).json({
         success: false,
         message: "Email already registered",
@@ -197,19 +220,31 @@ const googleAuth = async (req, res) => {
     const { googleId, email, name, avatar } = req.user;
     const { state } = req.query; // state=owner for owner signup flow
 
-    // Normalize email
     const normalizedEmail = email?.toLowerCase().trim();
-
     console.log("[GOOGLE AUTH] Processing:", { email: normalizedEmail, state });
 
-    // Check if user exists
-    let user = await User.findOne({ $or: [{ googleId }, { email: normalizedEmail }] });
+    // Check if user already exists
+    let user = await User.findOne({
+      $or: [{ googleId }, { email: normalizedEmail }],
+    });
+
+    // If existing user is a renter but trying to signup as owner, block
+    if (user && state === "owner" && user.role === "renter") {
+      console.log(
+        "[GOOGLE AUTH] User exists as renter, cannot sign up as owner"
+      );
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/login?error=${encodeURIComponent(
+          "You already have an account as a renter. Please login."
+        )}`
+      );
+    }
+
     let isNewUser = false;
 
     if (!user) {
-      // NEW USER - Determine role based on state parameter
+      // NEW USER - role based on state param
       const role = state === "owner" ? "owner" : "renter";
-      console.log("[GOOGLE AUTH] Creating new user with role:", role);
 
       user = new User({
         googleId,
@@ -218,15 +253,21 @@ const googleAuth = async (req, res) => {
         avatar,
         role,
         authProvider: "google",
+        ownerSetupCompleted: role === "owner" ? false : undefined, // default false for owners
       });
       await user.save();
       isNewUser = true;
       console.log("[GOOGLE AUTH] New user created:", user._id, "role:", role);
     } else {
-      // EXISTING USER
-      console.log("[GOOGLE AUTH] User exists:", user._id);
+      // EXISTING USER - NEVER CHANGE ROLE
+      console.log(
+        "[GOOGLE AUTH] Existing user found:",
+        user._id,
+        "role:",
+        user.role
+      );
 
-      // Link Google account if not already linked
+      // Link Google account if not linked
       if (!user.googleId) {
         user.googleId = googleId;
         user.authProvider = "google";
@@ -234,43 +275,34 @@ const googleAuth = async (req, res) => {
       }
 
       // Update avatar if provided
-      if (avatar && !user.avatar) {
-        user.avatar = avatar;
-      }
-
-      // Add owner role if state=owner and user doesn't have it
-      if (state === "owner" && user.role !== "owner") {
-        user.role = "owner";
-        console.log("[GOOGLE AUTH] Upgraded user to owner role");
-      }
+      if (avatar && !user.avatar) user.avatar = avatar;
 
       await user.save();
     }
 
-    // Generate JWT token
+    // Generate JWT
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    // Build response with all user fields
+
+    // Build user response
     const userResponse = {
       id: user._id,
       name: user.name,
       email: user.email,
       avatar: user.avatar,
-      role: user.role,
+      role: user.role, // role is always preserved
       authProvider: user.authProvider,
-      isNewUser, // Flag for new users
-      ownerSetupCompleted: user.ownerSetupCompleted, // Owner setup status
-      // Personal info
+      isNewUser,
+      ownerSetupCompleted: user.ownerSetupCompleted,
       phone: user.phone,
       address: user.address,
       gender: user.gender,
       birthday: user.birthday,
       bio: user.bio,
-      // Owner setup fields
       sellerType: user.sellerType,
       ownerAddress: user.ownerAddress,
       pickupAddress: user.pickupAddress,
@@ -282,11 +314,9 @@ const googleAuth = async (req, res) => {
       cityName: user.cityName,
       barangay: user.barangay,
       postalCode: user.postalCode,
-      // Business fields
       businessName: user.businessName,
       businessType: user.businessType,
       taxId: user.taxId,
-      // Payment fields
       bankName: user.bankName,
       accountNumber: user.accountNumber,
       accountName: user.accountName,
@@ -295,17 +325,16 @@ const googleAuth = async (req, res) => {
       ewalletName: user.ewalletName,
     };
 
-    // Redirect to frontend with token in query parameter
-    const redirectUrl = `http://localhost:3000/auth-callback?token=${token}&user=${encodeURIComponent(
+    // Redirect frontend
+    const redirectUrl = `${process.env.FRONTEND_URL}/auth-callback?token=${token}&user=${encodeURIComponent(
       JSON.stringify(userResponse)
     )}`;
-
     console.log("[GOOGLE AUTH] Redirecting to:", redirectUrl);
     res.redirect(redirectUrl);
   } catch (err) {
     console.error("[GOOGLE AUTH] Error:", err.message);
     res.redirect(
-      `http://localhost:3000/signup?error=${encodeURIComponent(
+      `${process.env.FRONTEND_URL}/signup?error=${encodeURIComponent(
         "Google authentication failed: " + err.message
       )}`
     );
@@ -384,32 +413,39 @@ const updateProfile = async (req, res) => {
     // --- Handle avatar upload ---
     if (req.file) {
       // Convert file buffer to base64
-      user.avatar = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
-    } else if (avatar && avatar.startsWith('data:')) {
+      user.avatar = `data:${
+        req.file.mimetype
+      };base64,${req.file.buffer.toString("base64")}`;
+    } else if (avatar && avatar.startsWith("data:")) {
       // Handle base64 avatar from FormData
       user.avatar = avatar;
     }
 
     // --- Update basic profile fields ---
     // Handle firstName/lastName or name
-    if (firstName !== undefined && firstName !== null && firstName !== '') {
-      const first = firstName || '';
-      const last = lastName || '';
+    if (firstName !== undefined && firstName !== null && firstName !== "") {
+      const first = firstName || "";
+      const last = lastName || "";
       user.name = `${first} ${last}`.trim();
-    } else if (lastName !== undefined && lastName !== null && lastName !== '') {
-      const first = firstName || '';
-      const last = lastName || '';
+    } else if (lastName !== undefined && lastName !== null && lastName !== "") {
+      const first = firstName || "";
+      const last = lastName || "";
       user.name = `${first} ${last}`.trim();
-    } else if (name !== undefined && name !== null && name !== '') {
+    } else if (name !== undefined && name !== null && name !== "") {
       user.name = name;
     }
-    
-    if (phone !== undefined && phone !== null && phone !== '') user.phone = phone;
-    if (address !== undefined && address !== null && address !== '') user.address = address;
-    if (zipCode !== undefined && zipCode !== null && zipCode !== '') user.postalCode = zipCode;
-    if (gender !== undefined && gender !== null && gender !== '') user.gender = gender;
-    if (birthday !== undefined && birthday !== null && birthday !== '') user.birthday = birthday;
-    if (bio !== undefined && bio !== null && bio !== '') user.bio = bio;
+
+    if (phone !== undefined && phone !== null && phone !== "")
+      user.phone = phone;
+    if (address !== undefined && address !== null && address !== "")
+      user.address = address;
+    if (zipCode !== undefined && zipCode !== null && zipCode !== "")
+      user.postalCode = zipCode;
+    if (gender !== undefined && gender !== null && gender !== "")
+      user.gender = gender;
+    if (birthday !== undefined && birthday !== null && birthday !== "")
+      user.birthday = birthday;
+    if (bio !== undefined && bio !== null && bio !== "") user.bio = bio;
 
     // --- Update owner setup fields ---
     if (sellerType) user.sellerType = sellerType;
@@ -423,7 +459,8 @@ const updateProfile = async (req, res) => {
     if (cityName) user.cityName = cityName;
     if (barangay) user.barangay = barangay;
     if (postalCode) user.postalCode = postalCode;
-    if (ownerSetupCompleted !== undefined) user.ownerSetupCompleted = ownerSetupCompleted;
+    if (ownerSetupCompleted !== undefined)
+      user.ownerSetupCompleted = ownerSetupCompleted;
 
     // --- Update business fields ---
     if (businessName) user.businessName = businessName;
@@ -480,12 +517,10 @@ const updateProfile = async (req, res) => {
     });
   } catch (err) {
     console.error("[UPDATE PROFILE] Error:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error updating profile: " + err.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error updating profile: " + err.message,
+    });
   }
 };
 
@@ -533,7 +568,9 @@ const sendOwnerVerificationEmailEndpoint = async (req, res) => {
     // Store token in database
     console.log("[SEND VERIFICATION EMAIL] Storing token in database");
     user.emailVerificationToken = verificationToken;
-    user.emailVerificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    user.emailVerificationTokenExpiry = new Date(
+      Date.now() + 24 * 60 * 60 * 1000
+    );
     user.emailVerificationSentAt = new Date();
     await user.save();
 

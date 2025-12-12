@@ -62,7 +62,7 @@ const MyListings = () => {
     try {
       const newStatus = item.status === "active" ? "inactive" : "active";
       const token = localStorage.getItem("token");
-      await fetch(`http://localhost:5000/api/items/${item._id}/status`, {
+      await fetch(`https://hirent-yw32.onrender.com/api/items/${item._id}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status: newStatus }),
         headers: {
@@ -94,7 +94,7 @@ const MyListings = () => {
       }
 
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:5000${ENDPOINTS.ITEMS.CREATE}`, {
+      const response = await fetch(`https://hirent-yw32.onrender.com/api/${ENDPOINTS.ITEMS.CREATE}`, {
         method: "POST",
         body: formData,
         headers: {

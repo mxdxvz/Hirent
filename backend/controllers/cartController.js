@@ -27,6 +27,7 @@ exports.addToCart = async (req, res) => {
 
     const populatedCart = await Cart.findById(updatedCart._id).populate({
       path: 'items.itemId',
+      select: 'title images pricePerDay category owner location zone province',
       populate: { path: 'owner', select: 'name' }
     });
 

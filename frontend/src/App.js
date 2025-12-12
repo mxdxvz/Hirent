@@ -17,7 +17,6 @@ import Footer from "./components/layouts/Footer";
 import Signup from "./pages/auth/Signup";
 import Login from "./pages/auth/Login";
 import GoogleCallback from "./pages/auth/GoogleCallback";
-import OwnerLogin from "./pages/auth/OwnerLogin";
 import OwnerSignup from "./pages/auth/OwnerSignup";
 import OwnerSetup from "./pages/auth/OwnerSetup";
 import VerifyEmail from "./pages/auth/VerifyEmail";
@@ -166,7 +165,6 @@ function App() {
             <Route path="/my-rentals" element={<ProtectedRoute><MyRentals /></ProtectedRoute>} />
 
             {/* ===== OWNER ROUTES ===== */}
-            <Route path="/ownerlogin" element={<OwnerLogin />} />
             <Route path="/ownersignup" element={<OwnerSignup />} />
             <Route path="/ownersetup" element={<OwnerSetup />} />
             <Route path="/verify-email" element={<VerifyEmail />} />

@@ -1,0 +1,11 @@
+# Netlify build settings
+[build]
+  command = "npm run build"
+  functions = "netlify/functions"
+  publish = "build"
+
+# Redirect all routes to index.html for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

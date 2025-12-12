@@ -152,85 +152,6 @@ const ImagePreview = ({ images, onRemove, showRemove = true }) => {
 };
 
 // -------------------------
-// FILE UPLOAD COMPONENT
-// -------------------------
-const FileUpload = ({
-  files,
-  setFiles,
-  accept = "image/*",
-  multiple = true,
-}) => {
-  const inputRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDrop = useCallback(
-    (e) => {
-      e.preventDefault();
-      setIsDragging(false);
-      const droppedFiles = Array.from(e.dataTransfer.files).filter((f) =>
-        f.type.startsWith("image/")
-      );
-      setFiles((prev) => [...prev, ...droppedFiles]);
-    },
-    [setFiles]
-  );
-
-  const handleDragOver = useCallback((e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    setFiles((prev) => [...prev, ...selectedFiles]);
-    e.target.value = "";
-  };
-
-  const removeFile = (index) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  return (
-    <div className="space-y-3">
-      <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onClick={() => inputRef.current?.click()}
-        className={`p-6 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${
-          isDragging
-            ? "border-purple-500 bg-purple-50"
-            : "border-gray-300 bg-gray-50/50 hover:border-purple-400 hover:bg-purple-50/50"
-        }`}
-      >
-        <div className="flex flex-col items-center text-center">
-          <div className="p-3 bg-purple-100 rounded-full mb-3">
-            <Upload className="text-purple-600" size={24} />
-          </div>
-          <p className="text-sm font-medium text-gray-700">
-            Drop images here or click to upload
-          </p>
-          <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 10MB</p>
-        </div>
-        <input
-          ref={inputRef}
-          type="file"
-          accept={accept}
-          multiple={multiple}
-          onChange={handleFileChange}
-          className="hidden"
-        />
-      </div>
-      <ImagePreview images={files} onRemove={removeFile} />
-    </div>
-  );
-};
-
-// -------------------------
 // STATS CARDS COMPONENT
 // -------------------------
 const StatsCards = ({ items }) => {
@@ -271,9 +192,7 @@ const StatsCards = ({ items }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {stat.value}
-              </p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
             </div>
             <div className={`p-3 ${stat.color} rounded-xl`}>
               <stat.icon className="text-white" size={20} />
@@ -309,10 +228,9 @@ const ItemCard = ({ item, onAction }) => {
   return (
     <>
       <div
-        className={`bg-white ${
-          statusMap[item.status].bgGradient
-        } backdrop-blur-xl rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1`}
+        className={`bg-white ${statusMap[item.status].bgGradient} backdrop-blur-xl rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1`}
       >
+        {/* Item card content remains unchanged */}
         <div className="flex gap-5">
           <div className="bg-gray-100 rounded-xl w-28 h-28 shadow-inner flex items-center justify-center overflow-hidden flex-shrink-0">
             <img
@@ -324,18 +242,16 @@ const ItemCard = ({ item, onAction }) => {
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="text-lg font-bold text-gray-900 truncate">
-                {item.name}
-              </h3>
+              <h3 className="text-lg font-bold text-gray-900 truncate">{item.name}</h3>
               <div
-                className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[13px] font-medium ${
-                  statusMap[item.status].pill
-                } ${statusMap[item.status].color}`}
+                className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[13px] font-medium ${statusMap[item.status].pill} ${statusMap[item.status].color}`}
               >
                 <StatusIcon size={14} />
                 {statusMap[item.status].label}
               </div>
             </div>
+
+            {/* Dates, renter, deposit */}
             <div className="mt-3 space-y-1.5">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <User size={14} className="text-gray-400" />
@@ -345,9 +261,7 @@ const ItemCard = ({ item, onAction }) => {
                 <Calendar size={14} className="text-gray-400" />
                 <span>Due: {formatDate(item.dueDate)}</span>
                 {item.status === "overdue" && (
-                  <span className="text-red-500 font-medium">
-                    ({getDaysOverdue(item.dueDate)} days overdue)
-                  </span>
+                  <span className="text-red-500 font-medium">({getDaysOverdue(item.dueDate)} days overdue)</span>
                 )}
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -356,6 +270,7 @@ const ItemCard = ({ item, onAction }) => {
               </div>
             </div>
 
+            {/* Proof modal */}
             {item.status === "returned" && item.proof?.length > 0 && (
               <div className="mt-4">
                 <button
@@ -368,6 +283,7 @@ const ItemCard = ({ item, onAction }) => {
               </div>
             )}
 
+            {/* Action buttons */}
             {item.status !== "returned" && item.status !== "lost" && (
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
@@ -413,23 +329,13 @@ const ItemCard = ({ item, onAction }) => {
         </div>
       </div>
 
-      <Modal
-        isOpen={showProofModal}
-        onClose={() => setShowProofModal(false)}
-        title="Return Proof"
-        size="lg"
-      >
+      <Modal isOpen={showProofModal} onClose={() => setShowProofModal(false)} title="Return Proof" size="lg">
         <p className="text-gray-600 text-sm mb-4">
           Photos submitted as proof of return for {item.name}
         </p>
         <div className="grid grid-cols-2 gap-4">
           {item.proof?.map((img, i) => (
-            <img
-              key={i}
-              src={img}
-              alt={`Return proof ${i + 1}`}
-              className="w-full h-48 object-cover rounded-xl shadow-md"
-            />
+            <img key={i} src={img} alt={`Return proof ${i + 1}`} className="w-full h-48 object-cover rounded-xl shadow-md" />
           ))}
         </div>
         <button
@@ -450,11 +356,6 @@ export default function OwnerReturns({ initialItems = [] }) {
   const [items, setItems] = useState(initialItems);
   const [filters, setFilters] = useState("All");
   const [search, setSearch] = useState("");
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [modalType, setModalType] = useState(null);
-  const [uploadImages, setUploadImages] = useState([]);
-  const [damageDescription, setDamageDescription] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
@@ -471,15 +372,9 @@ export default function OwnerReturns({ initialItems = [] }) {
         return item;
       })
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- All modal actions remain identical ---
-  // confirmReturn, fileDamage, markLost, releaseDeposit, deductDeposit, openModal, closeModal
-  // filteredItems calculation identical
-  // Notification and search/filter UI identical
-  // All modals for return, damage, lost, deposit identical
-
-  // --- FILTERING ---
   const filteredItems = items.filter((item) => {
     const matchSearch =
       item.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -503,7 +398,6 @@ export default function OwnerReturns({ initialItems = [] }) {
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-gray-100">
       <OwnerSidebar />
       <div className="flex-1 p-8 ml-60">
-        {/* Notifications */}
         {notification && (
           <div
             className={`fixed top-6 right-6 z-[100] px-6 py-4 rounded-2xl shadow-2xl animate-slideIn ${
@@ -583,13 +477,9 @@ export default function OwnerReturns({ initialItems = [] }) {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4">
               <PackageX className="text-gray-400" size={32} />
             </div>
-            <h3 className="text-xl font-semibold text-gray-700">
-              No items found
-            </h3>
+            <h3 className="text-xl font-semibold text-gray-700">No items found</h3>
             <p className="text-gray-500 mt-2">
-              {search
-                ? "Try adjusting your search terms"
-                : "No items match the selected filter"}
+              {search ? "Try adjusting your search terms" : "No items match the selected filter"}
             </p>
           </div>
         )}
@@ -597,11 +487,7 @@ export default function OwnerReturns({ initialItems = [] }) {
         {/* ITEM CARDS */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {filteredItems.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              onAction={(i, type) => console.log(i, type)}
-            />
+            <ItemCard key={item.id} item={item} onAction={(i, type) => console.log(i, type)} />
           ))}
         </div>
       </div>

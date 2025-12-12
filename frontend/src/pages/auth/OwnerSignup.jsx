@@ -93,7 +93,6 @@ const OwnerSignup = () => {
 
       // ✓ Redirect owners to setup flow
       navigate("/ownersetup", { replace: true });
-
     } catch (err) {
       console.error("Owner signup error:", err);
       setError("Network error. Please try again.");
@@ -101,11 +100,10 @@ const OwnerSignup = () => {
   };
 
   // -------------------------------
-  // GOOGLE SIGNUP → Owner
+  // GOOGLE SIGNUP BUTTON → Owner
   // -------------------------------
   const handleGoogleSignup = () => {
-    window.location.href =
-      "http://localhost:5000/api/auth/google/owner";
+    window.location.href = "https://hirent-yw32.onrender.com/api/auth/google/owner";
   };
 
   return (
@@ -124,12 +122,21 @@ const OwnerSignup = () => {
 
         <div className="z-10 cursor-default bg-white w-[480px] h-[650px] rounded-2xl shadow-2xl flex flex-row overflow-hidden hover:shadow-2xl hover:scale-[1.01] transition-all duration-300">
           <div className="flex flex-col justify-center items-center w-full p-4">
-
             <div className="flex flex-col items-start justify-start ml-12 w-full">
-              <img src={hirentLogo} alt="Hirent Logo" className="w-24 h-auto mb-6" />
+              <img
+                src={hirentLogo}
+                alt="Hirent Logo"
+                className="w-24 h-auto mb-6"
+              />
             </div>
 
             <div className="w-full flex flex-col items-start ml-14">
+              <Link
+                to="/signup"
+                className="text-[13px] font-medium text-[#7a19aa] hover:underline"
+              >
+                ← Go Back
+              </Link>
               <h2 className="text-[23px] font-bold text-gray-900">
                 Become an Owner
               </h2>
@@ -204,12 +211,18 @@ const OwnerSignup = () => {
                     className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-[#7A1CA9]"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                    {showPassword ? (
+                      <FiEyeOff size={20} />
+                    ) : (
+                      <FiEye size={20} />
+                    )}
                   </span>
                 )}
               </div>
 
-              {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+              {error && (
+                <p className="text-red-500 text-xs text-center">{error}</p>
+              )}
 
               {/* BUTTONS */}
               <div className="flex flex-col gap-2">
@@ -237,26 +250,29 @@ const OwnerSignup = () => {
 
             <p className="text-[12.5px] text-gray-600 text-center mt-5 mb-8">
               Already have an account?{" "}
-              <Link to="/login" className="text-[#862bb3] hover:underline font-medium">
+              <Link
+                to="/login"
+                className="text-[#862bb3] hover:underline font-medium"
+              >
                 Login ➔
               </Link>
             </p>
 
             <div className="w-full flex flex-col items-start ml-12">
-                <p className="text-[12px] text-gray-600 mb-3">
-                  By proceeding, you agree to the{" "}
-                  <span className="text-blue-600 cursor-pointer hover:underline">Terms and Conditions</span>{" "}
-                  and
-                  <br />
-                  <span className="text-blue-600 cursor-pointer hover:underline">
-                    Privacy Policy
-                  </span>
-                </p>
-              </div>
-              {/* BOTTOM LINKS */}
-            <div
-              className="w-full flex gap-3 text-[12px] text-gray-500 mt-4 justify-start ml-12"
-            >
+              <p className="text-[12px] text-gray-600 mb-3">
+                By proceeding, you agree to the{" "}
+                <span className="text-blue-600 cursor-pointer hover:underline">
+                  Terms and Conditions
+                </span>{" "}
+                and
+                <br />
+                <span className="text-blue-600 cursor-pointer hover:underline">
+                  Privacy Policy
+                </span>
+              </p>
+            </div>
+            {/* BOTTOM LINKS */}
+            <div className="w-full flex gap-3 text-[12px] text-gray-500 mt-4 justify-start ml-12">
               <span className="hover:underline cursor-pointer">Help</span>
               <span className="hover:underline cursor-pointer">Privacy</span>
               <span className="hover:underline cursor-pointer">Terms</span>

@@ -12,7 +12,10 @@ module.exports = (req, res, next) => {
     const splitToken = token.split(' ')[1];
     const decoded = jwt.verify(splitToken, process.env.JWT_SECRET);
 
-    req.user = { userId: decoded.userId }; // attach userId to request
+    console.log("DECODED TOKEN:", decoded);
+
+
+    req.user = { userId: decoded.userId }; 
     next();
   } catch (err) {
     res.status(401).json({ msg: 'Token is not valid' });

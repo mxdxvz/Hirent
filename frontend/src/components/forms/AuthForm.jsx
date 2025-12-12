@@ -34,104 +34,98 @@ const AuthForm = ({ mode }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // --- NAME (signup only) ---
-    if (mode === "signup" && !formData.name.trim()) {
-      setError("Name is required.");
+      // --- Validation logic (unchanged) ---
+  if (mode === "signup" && !formData.name.trim()) {
+    setError("Name is required.");
+    return;
+  }
+
+  if (mode === "signup" && !validateName(formData.name)) {
+    setError("Name must be at least 2 characters.");
+    return;
+  }
+
+  if (!formData.email.trim()) {
+    setError("Email is required.");
+    return;
+  }
+
+  if (!validateEmail(formData.email)) {
+    setError("Enter a valid email address.");
+    return;
+  }
+
+  if (!formData.password) {
+    setError("Password is required.");
+    return;
+  }
+
+  if (formData.password.length < 6) {
+    setError("Password must be at least 6 characters.");
+    return;
+  }
+
+  if (!/[0-9]/.test(formData.password)) {
+    setError("Password must include at least one number.");
+    return;
+  }
+
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+    setError("Password must include at least one special character.");
+    return;
+  }
+
+  setError("");
+
+      // --- Backend API call ---
+  try {
+    const endpoint = mode === "signup" ? "/api/auth/register" : "/api/auth/login";
+    const payload = mode === "signup"
+      ? { name: formData.name, email: formData.email, password: formData.password }
+      : { email: formData.email, password: formData.password };
+
+    const response = await fetch(`${process.env.REACT_APP_API_URL}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setError(data.msg || data.message || "Authentication failed");
       return;
     }
 
-    if (mode === "signup" && !validateName(formData.name)) {
-      setError("Name must be at least 2 characters.");
-      return;
+     if (data.token) {
+      const user = data.user || { email: formData.email };
+      login(data.token, user);
+
+      setTimeout(() => {
+        if (user.role === "owner") {
+          navigate("/owner/dashboard", { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
+      }, 300);
+    } else {
+      setError("No token received from server");
     }
-
-    // --- EMAIL ---
-    if (!formData.email.trim()) {
-      setError("Email is required.");
-      return;
-    }
-
-    if (!validateEmail(formData.email)) {
-      setError("Enter a valid email address.");
-      return;
-    }
-
-    // --- PASSWORD ---
-    if (!formData.password) {
-      setError("Password is required.");
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-
-    if (!/[0-9]/.test(formData.password)) {
-      setError("Password must include at least one number.");
-      return;
-    }
-
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
-      setError("Password must include at least one special character.");
-      return;
-    }
-
-    // --- CLEAR ERRORS ---
-    setError("");
-
-    // CALL BACKEND API
-    try {
-      const endpoint = mode === "signup" ? "/api/auth/register" : "/api/auth/login";
-      const payload = mode === "signup" 
-        ? { name: formData.name, email: formData.email, password: formData.password }
-        : { email: formData.email, password: formData.password };
-
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.msg || data.message || "Authentication failed");
-        return;
-      }
-
-      if (data.token) {
-        // Store token and user data
-        const user = data.user || { email: formData.email };
-        login(data.token, user);
-        
-        // Redirect based on user role
-        setTimeout(() => {
-          if (user.role === 'owner') {
-            navigate('/owner/dashboard', { replace: true });
-          } else {
-            navigate('/', { replace: true });
-          }
-        }, 300);
-      } else {
-        setError("No token received from server");
-      }
-    } catch (err) {
-      console.error("Auth error:", err);
-      setError("Network error. Please try again.");
-    }
-  };
+  } catch (err) {
+    console.error("Auth error:", err);
+    setError("Network error. Please try again.");
+  }
+};
 
   // GOOGLE LOGIN HANDLER
   const handleGoogleAuth = () => {
-    // Redirect to backend Google OAuth endpoint
-    // For signup: uses standard /google route (creates renter by default)
-    // For login: uses standard /google route (logs in existing user)
-    window.location.href = 'http://localhost:5000/api/auth/google';
-  };
+  // For renter login/signup
+  const googleUrl = mode === "signup"
+    ? `${process.env.REACT_APP_API_URL}/api/auth/google`
+    : `${process.env.REACT_APP_API_URL}/api/auth/google`;
 
+  window.location.href = googleUrl;
+};
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -143,44 +137,40 @@ const AuthForm = ({ mode }) => {
           backgroundPosition: "center",
         }}
       >
-
         {/* AUTH CARD */}
         <div
           className={`z-10 cursor-default bg-white ${
-            mode === "signup" ? "w-[480px] h-[650px]" : "w-[450px] h-[550px]"
+            mode === "signup" ? "w-[480px] h-[650px]" : "w-[450px] h-[540px]"
           } rounded-2xl shadow-2xl flex flex-row overflow-hidden hover:shadow-3xl hover:scale-[1.01] transition-all duration-300`}
         >
           {/* FORM AREA */}
           <div className="flex flex-col justify-center items-center w-full p-5">
             <div className="flex flex-col items-start justify-start ml-12 w-full">
-              <img src={hirentLogo} alt="Hirent Logo" className="w-24 h-auto mb-6" />
+              <img
+                src={hirentLogo}
+                alt="Hirent Logo"
+                className="w-24 h-auto mb-6"
+              />
             </div>
 
             <div className="w-full flex flex-col items-start ml-12">
               {mode === "signup" && (
                 <Link
                   to="/ownersignup"
-                  className="text-[13px] font-medium text-[#7a19aa] hover:underline mb-1"
+                  className="text-[13px] font-medium text-[#7a19aa] hover:underline"
                 >
-                  Be an Owner ➔
+                  Be an Owner →
                 </Link>
               )}
-
-              {mode === "login" && (
-                <Link
-                  to="/ownerlogin"
-                  className="text-[13px] font-medium text-[#7a19aa] hover:underline mb-1"
-                >
-                  Log In as Owner ➔
-                </Link>
-              )}
-
+              
               <h2 className="text-[23px] font-bold text-gray-900">
                 {mode === "signup" ? "Get started with Hirent" : "Log In"}
               </h2>
 
               <p className="text-[14.5px] font-medium text-gray-600 mb-4">
-                {mode === "signup" ? "Sign up now and explore the platform" : "Continue to Hirent"}
+                {mode === "signup"
+                  ? "Sign up now and explore the platform"
+                  : "Continue to Hirent"}
               </p>
             </div>
 
@@ -267,7 +257,9 @@ const AuthForm = ({ mode }) => {
                 )}
               </div>
               {/* ERROR MESSAGE */}
-              {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+              {error && (
+                <p className="text-red-500 text-xs text-center">{error}</p>
+              )}
 
               {/* SUBMIT BUTTON */}
               <button
@@ -294,7 +286,9 @@ const AuthForm = ({ mode }) => {
 
             {/* SWITCH LOGIN / SIGNUP */}
             <p className="text-[12.5px] text-gray-600 text-center mt-5 mb-8">
-              {mode === "signup" ? "Already have an account?" : "Don’t have an account?"}{" "}
+              {mode === "signup"
+                ? "Already have an account?"
+                : "Don’t have an account?"}{" "}
               <Link
                 to={mode === "signup" ? "/login" : "/signup"}
                 className="text-[#862bb3] hover:underline font-medium"
@@ -308,7 +302,9 @@ const AuthForm = ({ mode }) => {
               <div className="w-full flex flex-col items-start ml-12">
                 <p className="text-[12px] text-gray-600 mb-3">
                   By proceeding, you agree to the{" "}
-                  <span className="text-blue-600 cursor-pointer hover:underline">Terms and Conditions</span>{" "}
+                  <span className="text-blue-600 cursor-pointer hover:underline">
+                    Terms and Conditions
+                  </span>{" "}
                   and
                   <br />
                   <span className="text-blue-600 cursor-pointer hover:underline">

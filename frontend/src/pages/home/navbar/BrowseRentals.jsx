@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext  } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../../context/AuthContext";
 import SortDropdown from "../../../components/dropdown/SortDropdown";
 import FilterSidebar from "../../../components/filters/FilterSidebar";
 import Navbar from "../../../components/layouts/MainNav";
@@ -11,6 +12,8 @@ import { makeAPICall, ENDPOINTS } from "../../../config/api";
 
 const BrowseRentals = () => {
   const navigate = useNavigate();
+
+  const { addToCart } = useContext(AuthContext);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [listings, setListings] = useState([]);
@@ -94,22 +97,18 @@ const BrowseRentals = () => {
   // 🔥 ADD TO COLLECTION (CART)
   // -----------------------------
   const handleAddToCollection = async (item) => {
-    try {
-      await makeAPICall(ENDPOINTS.CART.ADD, {
-        method: "POST",
-        body: JSON.stringify({ itemId: item._id, quantity: 1 }),
-        headers: { "Content-Type": "application/json" },
-      });
+  try {
+    await addToCart(item, 1); // <-- use context function
+    // Show "added" animation
+    setJustAdded((prev) => [...prev, item._id]);
+    setTimeout(() => {
+      setJustAdded((prev) => prev.filter((id) => id !== item._id));
+    }, 2000);
+  } catch (err) {
+    console.error("Failed to add to cart:", err);
+  }
+};
 
-      // Show "added" animation
-      setJustAdded((prev) => [...prev, item._id]);
-      setTimeout(() => {
-        setJustAdded((prev) => prev.filter((id) => id !== item._id));
-      }, 2000);
-    } catch (err) {
-      console.error("Failed to add to cart:", err);
-    }
-  };
 
   // -----------------------------
   // 🔥 FILTER + SORT LOGIC

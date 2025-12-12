@@ -28,6 +28,8 @@ const CollectionPage = () => {
     };
   }, []);
 
+  
+
   const handleRemoveItem = (id) => {
     removeFromCart(id);
   };
