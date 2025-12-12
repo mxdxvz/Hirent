@@ -56,7 +56,7 @@ export const ENDPOINTS = {
   CART: {
     GET: `${API_PREFIX}/cart`,
     ADD: `${API_PREFIX}/cart/add`,
-    REMOVE: (itemId) => `${API_PREFIX}/cart/remove/${itemId}`,
+    REMOVE: (itemId) => `${API_PREFIX}/cart/${itemId}`,
     UPDATE: `${API_PREFIX}/cart/update`,
   },
 
@@ -70,15 +70,23 @@ export const ENDPOINTS = {
   },
 
   // -----------------------
+  // COUPONS
+  // -----------------------
+  COUPONS: {
+    VALIDATE: `${API_PREFIX}/coupons/validate`,
+  },
+
+  // -----------------------
   // BOOKINGS
   // -----------------------
   BOOKINGS: {
     GET_MY: `${API_PREFIX}/bookings/me`,
+    GET_USER_BOOKINGS: (userId) => `${API_PREFIX}/bookings/user/${userId}`,
     CREATE: `${API_PREFIX}/bookings`,
     GET_ONE: (id) => `${API_PREFIX}/bookings/${id}`,
     CANCEL: (id) => `${API_PREFIX}/bookings/${id}/cancel`,
     UPDATE_STATUS: (id) => `${API_PREFIX}/bookings/${id}/status`,
-    OWNER_BOOKINGS: `${API_PREFIX}/bookings/owner`,
+    OWNER_BOOKINGS: (ownerId) => `${API_PREFIX}/bookings/owner/${ownerId}`,
   },
 
   // -----------------------
@@ -142,6 +150,7 @@ export const ENDPOINTS = {
 // =============================================
 export const makeAPICall = async (endpoint, options = {}) => {
   const token = localStorage.getItem("token");
+  console.log("Making API call with token:", token ? 'Present' : 'Missing');
 
   const headers = {
     "Content-Type": "application/json",

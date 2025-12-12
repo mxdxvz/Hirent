@@ -1,15 +1,28 @@
-import React from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Star, MapPin, Heart, Check, Eye } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 
-const RentalItemCard = ({
-  item,
-  wishlist,
-  justAdded,
-  toggleWishlist,
-  handleAddToCollection,
-  navigate,
-}) => {
+const RentalItemCard = ({ item, justAdded, handleAddToCollection }) => {
+  const navigate = useNavigate();
+  const { wishlist, toggleWishlist, isLoggedIn } = useContext(AuthContext);
+
+  // Derived state: Check if the item is in the wishlist on every render.
+  const isFavorited = wishlist.some((w) => w && w._id === item._id);
+
+  const handleFavoriteClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    
+    // The context now handles optimistic updates and rollbacks.
+    toggleWishlist(item);
+  };
+
   const handleActionClick = (e, action) => {
     e.preventDefault();
     e.stopPropagation();
@@ -23,14 +36,14 @@ const RentalItemCard = ({
         {/* Wishlist & Eye Buttons */}
         <div className="absolute top-3 right-3 flex gap-1 z-10">
           <button
-            onClick={(e) => handleActionClick(e, () => toggleWishlist(item._id))}
+            onClick={handleFavoriteClick}
             className="bg-white text-purple-900 rounded-full shadow p-1.5 hover:bg-gray-200 transition"
           >
             <Heart
               size={16}
               strokeWidth={1.5}
               className={`transition ${
-                wishlist.includes(item._id)
+                isFavorited
                   ? "fill-[#fd2c48] stroke-[#fd2c48]"
                   : "stroke-[#565656]"
               }`}

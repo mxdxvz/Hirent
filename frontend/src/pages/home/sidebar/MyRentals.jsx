@@ -1,211 +1,206 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Package } from "lucide-react";
-import emptyItems from "../../../assets/empty-listings.png"
-import CancelConfirmationModal from "../../../components/modals/CancelModal";
-import { ViewDetailsModal } from "../../../components/modals/ViewDetailsModal";
-import RentalSummary from "../../../components/cards/RentalSummary";
-import SortDropdown from "../../../components/dropdown/SortDropdown";
-import RentalCard from "../../../components/cards/MyRentalsCard";
-import { makeAPICall, ENDPOINTS } from "../../../config/api";
+import React, { useState, useEffect, useMemo, useContext } from 'react';
+import { makeAPICall, ENDPOINTS } from '../../../config/api';
+import { AuthContext } from '../../../context/AuthContext';
+import { format } from 'date-fns';
+import MainLayout from '../../../components/layouts/MainLayout';
 
-const MyRentalsPage = () => {
-  const navigate = useNavigate();
-
-  const [showModal, setShowModal] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
-
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [selectedRentalId, setSelectedRentalId] = useState(null);
-
-  const [rentals, setRentals] = useState([]);
-  const [filter, setFilter] = useState("all");
-  const [sortOrder, setSortOrder] = useState("latest");
+const MyRentals = () => {
+  const { user } = useContext(AuthContext);
+  console.log("User from AuthContext:", user);
+  console.log("User ID:", user?.userId || user?._id);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('All');
 
   useEffect(() => {
-    document.title = "Hirent — Rental History";
-    return () => { document.title = "Hirent"; };
-  }, []);
+    const fetchBookings = async () => {
+      if (!user) {
+        console.log("No user found, skipping fetch");
+        return;
+      }
 
-  // Fetch user's rentals from backend
-  useEffect(() => {
-    const fetchRentals = async () => {
+      console.log("Fetching bookings for user:", user.userId || user._id);
+      setLoading(true);
+
       try {
-        const data = await makeAPICall(ENDPOINTS.BOOKINGS.GET_MY);
-        if (Array.isArray(data)) {
-          // Calculate totalAmount for each rental
-          const processed = data.map((rental) => {
-            const price = parseFloat(
-              String(rental.item?.price || 0).replace(/[^0-9.]/g, "")
-            );
-            const days = rental.days || 1;
-            return {
-              ...rental,
-              price,
-              totalAmount: price * days,
-              status: rental.status || "pending",
-            };
-          });
-          setRentals(processed);
+        const response = await makeAPICall(ENDPOINTS.BOOKINGS.GET_MY);
+        
+        // LOG EVERYTHING
+        console.log("=== FULL API RESPONSE ===");
+        console.log("Response:", response);
+        console.log("Response type:", typeof response);
+        console.log("Is array?", Array.isArray(response));
+        console.log("Response.data:", response?.data);
+        console.log("Response.success:", response?.success);
+        
+        // Handle different response structures
+        let bookingsData = [];
+        
+        if (Array.isArray(response)) {
+          bookingsData = response;
+        } else if (response?.success && Array.isArray(response.data)) {
+          bookingsData = response.data;
+        } else if (response?.data && Array.isArray(response.data)) {
+          bookingsData = response.data;
+        } else if (response?.bookings && Array.isArray(response.bookings)) {
+          bookingsData = response.bookings;
         }
+        
+        console.log("Extracted bookings data:", bookingsData);
+        console.log("Number of bookings:", bookingsData.length);
+        
+        if (bookingsData.length > 0) {
+          console.log("First booking sample:", bookingsData[0]);
+          console.log("First booking itemId:", bookingsData[0]?.itemId);
+          console.log("First booking ownerId:", bookingsData[0]?.ownerId);
+        }
+        
+        setBookings(bookingsData);
+        setError(null);
+        
       } catch (err) {
-        console.error("Error fetching rentals:", err);
+        console.error("=== ERROR FETCHING BOOKINGS ===");
+        console.error("Error object:", err);
+        console.error("Error message:", err.message);
+        console.error("Error response:", err.response);
+        setError('Failed to fetch bookings. Check console for details.');
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchRentals();
-  }, []);
+    fetchBookings();
+  }, [user]);
 
-  const handleCancel = async (id) => {
-    try {
-      await makeAPICall(ENDPOINTS.BOOKINGS.CANCEL(id), { method: "PUT" });
-      setRentals((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, status: "cancelled" } : item))
-      );
-    } catch (err) {
-      console.error("Error cancelling rental:", err);
-    }
-  };
+  const filteredBookings = useMemo(() => {
+    if (activeTab === 'All') return bookings;
+    return bookings.filter(b => b.status.toLowerCase() === activeTab.toLowerCase());
+  }, [bookings, activeTab]);
 
-  const confirmCancel = () => {
-    handleCancel(selectedId);
-    setShowModal(false);
-    setSelectedId(null);
-  };
+  const summary = useMemo(() => {
+    const completed = bookings.filter(b => b.status === 'completed');
+    return {
+      totalItems: bookings.length,
+      subtotalCompleted: completed.reduce((sum, b) => sum + (b.subtotal || 0), 0),
+      totalDiscounts: bookings.reduce((sum, b) => sum + (b.discount || 0), 0),
+      totalSecurityDeposit: bookings.reduce((sum, b) => sum + (b.securityDeposit || 0), 0),
+      totalExpense: completed.reduce((sum, b) => sum + (b.totalAmount || 0), 0),
+    };
+  }, [bookings]);
 
-  const safeRentals = Array.isArray(rentals) ? rentals : [];
-  
-  const filtered = safeRentals.filter((r) => {
-    if (filter === "all") return true;
-    return r.status === filter;
-  });
+  if (loading) return <MainLayout><div className="text-center p-8">Loading your rentals...</div></MainLayout>;
+  if (error) return <MainLayout><div className="text-center p-8 text-red-500">{error}</div></MainLayout>;
 
-  const sorted = [...filtered].sort((a, b) => {
-    const aDate = new Date(a.bookedFrom || a.addedAt || Date.now());
-    const bDate = new Date(b.bookedFrom || b.addedAt || Date.now());
-    return sortOrder === "latest" ? bDate - aDate : aDate - bDate;
-  });
+  const tabs = ['All', 'Approved', 'Pending', 'Cancelled', 'Completed'];
 
   return (
-    <div className="flex min-h-screen px-4 md:px-6 lg:px-8">
-      {/* LEFT STATIC COLUMN */}
-      <div className="w-[560px] pl-16 flex-shrink-0 sticky top-10 self-start h-fit bg-gray-50 border-r border-gray-200">
-        {/* Back + Sort */}
-        <div className="flex items-center justify-between mb-3 mt-10">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-[#7A1CA9] text-sm font-medium hover:underline"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Go back
-          </button>
+    <MainLayout>
+      <div className="p-4 sm:ml-64">
+        <div className="container mx-auto p-8">
+      <h1 className="text-3xl font-bold mb-6">My Rentals</h1>
+      
+      {/* Summary Section */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+          <p className="text-2xl font-bold">{summary.totalItems}</p>
+          <p className="text-gray-500">Total Items Rented</p>
         </div>
-
-        {/* TITLE */}
-        <div className="flex items-start gap-4 mb-5">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-50 via-purple-100 to-purple-200">
-            <Package className="w-8 h-8 text-[#a12fda]" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-purple-900 mt-1">Your Rental History</h1>
-            <p className="text-gray-500 text-sm mr-4">View and manage your booked items</p>
-          </div>
-          <div className="mt-4">
-            <SortDropdown
-              options={["Latest", "Oldest"]}
-              onSortChange={(value) => setSortOrder(value.toLowerCase())}
-            />
-          </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+          <p className="text-2xl font-bold">₱{summary.subtotalCompleted.toFixed(2)}</p>
+          <p className="text-gray-500">Subtotal of Completed</p>
         </div>
-
-        {/* CATEGORY FILTER BUTTONS */}
-        <div className="flex flex-wrap gap-2 mb-4 mr-5">
-          {["all", "approved", "pending", "cancelled", "completed"].map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setFilter(cat)}
-              className={`px-2 py-1 rounded-lg text-[13px] transition ${
-                filter === cat
-                  ? "bg-[#7A1CA9] text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-[#7A1CA9]/10"
-              }`}
-            >
-              {cat.charAt(0).toUpperCase() + cat.slice(1)} (
-              {safeRentals.filter((r) => (cat === "all" ? true : r.status === cat)).length})
-            </button>
-          ))}
+        <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+          <p className="text-2xl font-bold">₱{summary.totalDiscounts.toFixed(2)}</p>
+          <p className="text-gray-500">Total Discounts</p>
         </div>
-
-        {/* RENTAL SUMMARY */}
-        <RentalSummary rentals={rentals} />
-
-        {/* FOOTER INFO */}
-        <div className="bg-purple-100 p-4 mt-3 mb-10 mr-5 rounded-lg text-purple-700 text-[13px]">
-          <ul className="space-y-1">
-            <li>✓ View and manage all your booked items in one place</li>
-            <li>✓ Keep track of rental status (pending, approved, completed, cancelled)</li>
-            <li>✓ Get notified of updates and messages from owners</li>
-            <li>✓ Re-book completed rentals easily</li>
-          </ul>
+        <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+          <p className="text-2xl font-bold">₱{summary.totalSecurityDeposit.toFixed(2)}</p>
+          <p className="text-gray-500">Security Deposits</p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+          <p className="text-2xl font-bold">₱{summary.totalExpense.toFixed(2)}</p>
+          <p className="text-gray-500">Total Expense</p>
         </div>
       </div>
 
-      {/* RIGHT COLUMN — RENTALS LIST */}
-      <div className="flex-1 pl-6 pb-20 pt-10">
-  {rentals.length === 0 ? (
-    <div className="flex flex-col items-center justify-center h-[90vh] w-full">
-      <img
-        src={emptyItems}
-        alt="No Rentals"
-        className="w-64 h-64 mb-3 object-contain"
-      />
-      <h2 className="text-[22px] font-bold text-gray-700">No bookings yet.</h2>
-      <p className="text-gray-400 text-center max-w-sm mb-4">
-        Looks like you haven’t booked any items yet.
-      </p>
-      <button
-        onClick={() => navigate("/collection")}
-        className="bg-white border border-[#7A1CA9]/20 text-[#7A1CA9] px-3 py-1.5 text-sm rounded-lg shadow hover:bg-gray-50"
-      >
-        Go to Collection ➔
-      </button>
-    </div>
-  ) : (
-    <div className="grid grid-cols-1 gap-4">
-      {sorted.map((item) => (
-        <RentalCard
-          key={item.id}
-          item={item}
-          onViewDetails={(id) => {
-            setSelectedRentalId(id);
-            setDetailsModalOpen(true);
-          }}
-          onRemove={(id) => setRentals((prev) => prev.filter((r) => r.id !== id))}
-          onCancel={(id) => {
-            setSelectedId(id);
-            setShowModal(true);
-          }}
-        />
-      ))}
-    </div>
-  )}
-</div>
+      {/* Tabs */}
+      <div className="mb-6 flex border-b">
+        {tabs.map(tab => (
+          <button 
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`py-2 px-4 ${activeTab === tab ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-500'}`}>
+            {tab} ({tab === 'All' ? bookings.length : bookings.filter(b => b.status.toLowerCase() === tab.toLowerCase()).length})
+          </button>
+        ))}
+      </div>
 
+      {/* Bookings List */}
+      <div className="space-y-4">
+        {filteredBookings.length > 0 ? (
+          filteredBookings.map(booking => {
+            console.log("Rendering booking:", booking._id, booking);
 
-      {/* MODALS */}
-      <CancelConfirmationModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onConfirm={confirmCancel}
-      />
-      <ViewDetailsModal
-        isOpen={detailsModalOpen}
-        onClose={() => setDetailsModalOpen(false)}
-        rentalData={rentals}
-        itemId={selectedRentalId}
-      />
+            // Check if data exists
+            if (!booking) {
+              console.warn("Booking is null/undefined");
+              return null;
+            }
+
+            if (!booking.itemId) {
+              console.warn("Booking missing itemId:", booking._id);
+              return (
+                <div key={booking._id} className="bg-red-50 p-4 rounded">
+                  Booking {booking._id}: Item data not found
+                </div>
+              );
+            }
+
+            if (!booking.ownerId) {
+              console.warn("Booking missing ownerId:", booking._id);
+            }
+
+            const imageUrl = booking.itemId?.images?.[0] || 'https://via.placeholder.com/150';
+            const itemTitle = booking.itemId?.title || 'Unknown Item';
+            const ownerName = booking.ownerId?.name || 'Unknown Owner';
+
+            return (
+              <div key={booking._id} className="bg-white p-4 rounded-lg shadow-sm flex items-center">
+                <img src={imageUrl} alt={itemTitle} className="w-24 h-24 object-cover rounded-md mr-4"/>
+                <div className="flex-grow">
+                  <h2 className="font-bold text-lg">{itemTitle}</h2>
+                  <p className="text-sm text-gray-500">
+                    {booking.startDate ? format(new Date(booking.startDate), 'PPP') : 'N/A'} - 
+                    {booking.endDate ? format(new Date(booking.endDate), 'PPP') : 'N/A'}
+                  </p>
+                  <p className="text-sm">Owner: {ownerName}</p>
+                  <p className="text-sm">Booked on: {booking.createdAt ? format(new Date(booking.createdAt), 'PPP') : 'N/A'}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-lg">₱{(booking.totalAmount || 0).toFixed(2)}</p>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    booking.status === 'pending' ? 'bg-yellow-200 text-yellow-800' :
+                    booking.status === 'approved' ? 'bg-green-200 text-green-800' :
+                    booking.status === 'cancelled' ? 'bg-red-200 text-red-800' :
+                    booking.status === 'completed' ? 'bg-blue-200 text-blue-800' :
+                    'bg-gray-200 text-gray-800'
+                  }`}>
+                    {booking.status || 'unknown'}
+                  </span>
+                  <p className="text-sm capitalize mt-1">{booking.deliveryMethod || 'N/A'}</p>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="text-center py-8"> <p className="mb-2">No bookings found for this category.</p> <p className="text-sm text-gray-500">Total bookings loaded: {bookings.length}</p> </div>
+        )}
+      </div>
+      </div>
     </div>
+    </MainLayout>
   );
 };
 
-export default MyRentalsPage;
+export default MyRentals;

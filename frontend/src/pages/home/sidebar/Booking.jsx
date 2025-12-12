@@ -15,7 +15,7 @@ import { ArrowLeft, CalendarCheck } from "lucide-react";
 
 const Booking = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { itemId } = useParams();
 
   // Fetch item details from backend
   const [productData, setProductData] = useState(null);
@@ -31,10 +31,25 @@ const Booking = () => {
   const [couponData, setCouponData] = useState({
     applied: false,
     discount: 0,
+    code: '',
+    type: '',
   });
 
   const [paymentMethod, setPaymentMethod] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("delivery");
+  const [isBooking, setIsBooking] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
+  useEffect(() => {
+    if (productData && productData.deliveryOptions) {
+      const { offersDelivery, offersPickup } = productData.deliveryOptions;
+      if (offersDelivery && !offersPickup) {
+        setDeliveryMethod('delivery');
+      } else if (!offersDelivery && offersPickup) {
+        setDeliveryMethod('pickup');
+      }
+    }
+  }, [productData]);
 
   // Fetch item details from backend
   useEffect(() => {
@@ -42,8 +57,12 @@ const Booking = () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await makeAPICall(ENDPOINTS.ITEMS.GET_ONE(id));
-        setProductData(data);
+        const response = await makeAPICall(ENDPOINTS.ITEMS.GET_ONE(itemId));
+        if (response && response.item) {
+          setProductData(response.item);
+        } else {
+          setError("Item data not found in response.");
+        }
       } catch (err) {
         console.error("Error fetching item details:", err);
         setError("Failed to load item details");
@@ -52,20 +71,25 @@ const Booking = () => {
       }
     };
 
-    if (id) {
+    if (itemId) {
       fetchItemDetails();
     }
-  }, [id]);
+  }, [itemId]);
 
   const calculatePricing = () => {
     if (!productData) return { subtotal: 0, discount: 0, shippingFee: 0, securityDeposit: 0, total: 0 };
     
-    const price = productData.price || productData.pricePerDay || 0;
+    const price = productData.pricePerDay || 0;
     const subtotal = price * (rentalData.days || 1);
-    const discountAmount = couponData?.applied
-      ? (subtotal * (couponData?.discount || 0)) / 100
-      : 0;
-    const shippingFee = deliveryMethod === "delivery" ? 20 : 0;
+    let discountAmount = 0;
+    if (couponData?.applied) {
+      if (couponData.type === 'percentage') {
+        discountAmount = (subtotal * (couponData.discount || 0)) / 100;
+      } else if (couponData.type === 'fixed') {
+        discountAmount = couponData.discount || 0;
+      }
+    }
+    const shippingFee = deliveryMethod === "delivery" ? (productData.deliveryOptions?.deliveryFee || 0) : 0;
     const securityDeposit = productData.securityDeposit || 0;
     const total = subtotal - discountAmount + shippingFee + securityDeposit;
 
@@ -78,7 +102,62 @@ const Booking = () => {
     };
   };
 
-  const pricing = calculatePricing();
+    const pricing = calculatePricing();
+
+  const handleBooking = async () => {
+    // Validate rental dates
+    if (!rentalData.startDate || !rentalData.endDate) {
+      alert("Please select rental dates.");
+      return;
+    }
+
+    // Validate payment method
+    if (!paymentMethod) {
+      alert("Please select a payment method.");
+      return;
+    }
+
+    // Validate terms acceptance
+    if (!termsAccepted) {
+      alert("Please accept the terms and conditions.");
+      return;
+    }
+
+    setIsBooking(true);
+
+    const bookingData = {
+      itemId,
+      startDate: rentalData.startDate,
+      endDate: rentalData.endDate,
+      totalAmount: pricing.total,
+      subtotal: pricing.subtotal,
+      shippingFee: pricing.shippingFee,
+      securityDeposit: pricing.securityDeposit,
+      discount: pricing.discount,
+      deliveryMethod,
+      couponCode: couponData?.applied ? couponData.code : null,
+    };
+
+    try {
+      const response = await makeAPICall(ENDPOINTS.BOOKINGS.CREATE, {
+        method: "POST",
+        body: JSON.stringify(bookingData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.success) {
+        navigate(`/booking/confirmation/${response.data._id}`);
+      } else {
+        alert(response.message || "Failed to create booking. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error creating booking:", error);
+      alert("Failed to create booking. Please try again.");
+    } finally {
+      setIsBooking(false);
+    }
+  };
 
   if (loading) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   if (error) return <div className="flex items-center justify-center min-h-screen text-red-500">{error}</div>;
@@ -124,6 +203,11 @@ const Booking = () => {
               product={productData}
               pricing={pricing}
               rentalData={rentalData}
+              handleBooking={handleBooking}
+              isBooking={isBooking}
+              deliveryMethod={deliveryMethod}
+              termsAccepted={termsAccepted}
+              setTermsAccepted={setTermsAccepted}
             />
           </div>
         </div>
@@ -150,6 +234,7 @@ const Booking = () => {
           <DeliveryMethod
             deliveryMethod={deliveryMethod}
             setDeliveryMethod={setDeliveryMethod}
+            deliveryOptions={productData.deliveryOptions}
           />
 
           <ReturnDetails deliveryMethod={deliveryMethod} />

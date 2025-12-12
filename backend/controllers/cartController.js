@@ -2,38 +2,38 @@ const Cart = require('../models/Cart');
 
 exports.addToCart = async (req, res) => {
   const { itemId, quantity: qty } = req.body;
-  const quantity = Number(qty);
+  const quantity = Number(qty) || 1;
   const userId = req.user.userId;
 
   try {
     let cart = await Cart.findOne({ userId });
 
-    if (cart) {
-      // Cart exists for user
-      let itemIndex = cart.items.findIndex(p => p.itemId == itemId);
-
-      if (itemIndex > -1) {
-        // Product exists in the cart, update the quantity
-        let productItem = cart.items[itemIndex];
-        productItem.quantity = quantity;
-        cart.items[itemIndex] = productItem;
-      } else {
-        // Product does not exists in cart, add new item
-        cart.items.push({ itemId, quantity });
-      }
-      cart = await cart.save();
-      return res.status(201).send(cart);
-    } else {
-      // No cart for user, create new cart
-      const newCart = await Cart.create({
-        userId,
-        items: [{ itemId, quantity }]
-      });
-
-      return res.status(201).send(newCart);
+    if (!cart) {
+      // If no cart, create one
+      cart = new Cart({ userId, items: [] });
     }
+
+    const itemIndex = cart.items.findIndex((p) => p.itemId.toString() === itemId);
+
+    if (itemIndex > -1) {
+      // Product exists in the cart, update the quantity
+      cart.items[itemIndex].quantity = quantity;
+    } else {
+      // Product does not exist in cart, add new item
+      cart.items.push({ itemId, quantity });
+    }
+
+    const updatedCart = await cart.save();
+
+    const populatedCart = await Cart.findById(updatedCart._id).populate({
+      path: 'items.itemId',
+      populate: { path: 'owner', select: 'name' }
+    });
+
+    return res.status(201).send(populatedCart);
+
   } catch (err) {
-    console.log(err);
+    console.error("[ADD TO CART] Error:", err);
     res.status(500).send("Something went wrong");
   }
 };

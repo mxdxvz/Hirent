@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import Navbar from "../components/layouts/Navbar";
 import Sidebar from "../components/layouts/Sidebar";
@@ -7,6 +7,7 @@ import ImageGallery from "../components/product/ImageGallery";
 import ProductInfo from "../components/product/ProductInfo";
 import RelatedItems from "../components/product/RelatedItems";
 import { makeAPICall, ENDPOINTS } from "../config/api";
+import { AuthContext } from "../context/AuthContext";
 import {
   Flag,
   X,
@@ -366,6 +367,7 @@ const OwnerSection = ({ owner, onReport }) => {
 // -------------------------
 const ProductDetails = () => {
   const { id } = useParams();
+  const { wishlist, toggleWishlist, addToCart } = useContext(AuthContext);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -394,48 +396,12 @@ const ProductDetails = () => {
     setShowReportModal(true);
   };
 
-  const [wishlist, setWishlist] = useState([]);
-
-  useEffect(() => {
-    const loadWishlist = async () => {
-      try {
-        const data = await makeAPICall(ENDPOINTS.WISHLIST.GET);
-        setWishlist(data.map(item => item._id) || []);
-      } catch (err) {
-        console.error("Error loading wishlist:", err);
-      }
-    };
-    loadWishlist();
-  }, []);
-
-  const handleToggleWishlist = async (itemId) => {
-    try {
-      if (wishlist.includes(itemId)) {
-        await makeAPICall(ENDPOINTS.WISHLIST.REMOVE(itemId), { method: "DELETE" });
-        setWishlist((prev) => prev.filter((id) => id !== itemId));
-      } else {
-        await makeAPICall(ENDPOINTS.WISHLIST.ADD, {
-          method: "POST",
-          body: JSON.stringify({ itemId }),
-          headers: { "Content-Type": "application/json" },
-        });
-        setWishlist((prev) => [...prev, itemId]);
-      }
-    } catch (err) {
-      console.error("Wishlist update failed:", err);
-    }
+    const handleToggleWishlist = (itemId) => {
+    toggleWishlist(itemId);
   };
 
-  const handleAddToCollection = async (item) => {
-    try {
-      await makeAPICall(ENDPOINTS.CART.ADD, {
-        method: "POST",
-        body: JSON.stringify({ itemId: item._id, quantity: 1 }),
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (err) {
-      console.error("Failed to add to cart:", err);
-    }
+  const handleAddToCollection = (item) => {
+    addToCart(item, 1);
   };
 
   return (
@@ -480,7 +446,7 @@ const ProductDetails = () => {
             <div className="px-4 sm:px-6 lg:pl-32 lg:pr-6 py-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
                 <ImageGallery images={product.images} />
-                <ProductInfo product={product} handleAddToCollection={handleAddToCollection} handleToggleWishlist={handleToggleWishlist} wishlist={wishlist} />
+                <ProductInfo product={product} handleAddToCollection={handleAddToCollection} handleToggleWishlist={handleToggleWishlist} wishlist={wishlist.map(i => i._id)} />
               </div>
             </div>
 

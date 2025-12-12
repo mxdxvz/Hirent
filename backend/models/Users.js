@@ -53,7 +53,10 @@ const UserSchema = new mongoose.Schema({
   // Email Verification Token (for owner setup)
   emailVerificationToken: { type: String, sparse: true },
   emailVerificationTokenExpiry: { type: Date },
-  emailVerificationSentAt: { type: Date }
+  emailVerificationSentAt: { type: Date },
+
+  // Wishlist
+  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Item' }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', UserSchema);

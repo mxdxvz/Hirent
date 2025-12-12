@@ -1,60 +1,123 @@
 import React, { createContext, useState, useEffect } from "react";
+import { ENDPOINTS, makeAPICall } from "../config/api";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  // Initialize from localStorage immediately to prevent logout on refresh
   const storedToken = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
   const storedUser = typeof window !== 'undefined' ? localStorage.getItem("user") : null;
-  
+
   const [isLoggedIn, setIsLoggedIn] = useState(!!storedToken);
-  const [user, setUser] = useState(storedUser ? (() => {
-    try {
-      return JSON.parse(storedUser);
-    } catch (e) {
-      console.error("Error parsing user data:", e);
-      return null;
-    }
-  })() : null);
+  const [user, setUser] = useState(storedUser ? JSON.parse(storedUser) : null);
   const [token, setToken] = useState(storedToken);
-  const [wishlistCount, setWishlistCount] = useState(0);
-  const [collectionCount, setCollectionCount] = useState(0);
-  const [isInitialized, setIsInitialized] = useState(true);
+  const [wishlist, setWishlist] = useState([]);
+  const [cart, setCart] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Fetch counts when logged in
-  useEffect(() => {
-    if (isLoggedIn && token) {
-      const fetchCounts = async () => {
-        try {
-          const [wishRes, cartRes] = await Promise.all([
-            fetch("http://localhost:5000/api/wishlist", { headers: { Authorization: `Bearer ${token}` } }),
-            fetch("http://localhost:5000/api/cart", { headers: { Authorization: `Bearer ${token}` } }),
-          ]);
+  const fetchWishlistAndCart = async () => {
+    if (isLoggedIn) {
+      try {
+        const [wishlistRes, cartRes] = await Promise.all([
+          makeAPICall(ENDPOINTS.WISHLIST.GET),
+          makeAPICall(ENDPOINTS.CART.GET),
+        ]);
 
-          if (wishRes.ok) {
-            const wishData = await wishRes.json();
-            setWishlistCount(wishData.length || 0);
-          }
+        const newWishlist = wishlistRes?.success && Array.isArray(wishlistRes.wishlist) 
+          ? wishlistRes.wishlist.filter(Boolean) 
+          : [];
+        setWishlist(newWishlist);
 
-          if (cartRes.ok) {
-            const cartData = await cartRes.json();
-            setCollectionCount(cartData.items?.length || 0);
-          }
-        } catch (error) {
-          console.error("Error fetching counts:", error);
-        }
-      };
+        const newCart = cartRes?.items && Array.isArray(cartRes.items) 
+          ? cartRes.items.filter(Boolean) 
+          : [];
+        setCart(newCart);
 
-      fetchCounts();
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        // Don't logout on a simple fetch failure, just clear the data
+        setWishlist([]);
+        setCart([]);
+      }
     }
-  }, [isLoggedIn, token]);
-
-  const updateWishlistCount = (count) => {
-    setWishlistCount(count);
   };
 
-  const updateCollectionCount = (count) => {
-    setCollectionCount(count);
+  useEffect(() => {
+    const initializeAuth = async () => {
+      await fetchWishlistAndCart();
+      setIsInitialized(true);
+    };
+    initializeAuth();
+  }, [isLoggedIn]);
+
+  const toggleWishlist = async (item) => {
+    if (!isLoggedIn) {
+      console.log("User not logged in. Aborting wishlist toggle.");
+      return;
+    }
+    if (!item || !item._id) {
+      console.error("toggleWishlist called with invalid item:", item);
+      return;
+    }
+
+    const itemId = item._id;
+    const previousWishlist = [...wishlist];
+
+    // Optimistic UI Update
+    const isInWishlist = previousWishlist.some((w) => w && w._id === itemId);
+    const newOptimisticWishlist = isInWishlist
+      ? previousWishlist.filter((w) => w && w._id !== itemId)
+      : [...previousWishlist, item]; // Add the full item object
+    
+    setWishlist(newOptimisticWishlist);
+
+    try {
+      let response;
+      if (isInWishlist) {
+        response = await makeAPICall(ENDPOINTS.WISHLIST.REMOVE(itemId), { method: "DELETE" });
+      } else {
+        response = await makeAPICall(ENDPOINTS.WISHLIST.ADD, {
+          method: "POST",
+          body: JSON.stringify({ itemId }),
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      // Sync with the server's response as the source of truth
+      if (response?.success && Array.isArray(response.wishlist)) {
+        setWishlist(response.wishlist.filter(Boolean));
+      } else {
+        throw new Error("Invalid response from server during wishlist toggle.");
+      }
+    } catch (error) {
+      console.error("Failed to toggle wishlist, reverting UI:", error);
+      setWishlist(previousWishlist); // Rollback on error
+      // Revert to the previous state on any failure
+      setWishlist(previousWishlist);
+    }
+  };
+
+  const addToCart = async (item, quantity) => {
+    if (!isLoggedIn) return;
+    try {
+      await makeAPICall(ENDPOINTS.CART.ADD, {
+        method: "POST",
+        body: JSON.stringify({ itemId: item._id, quantity }),
+        headers: { "Content-Type": "application/json" },
+      });
+      await fetchWishlistAndCart(); // Refetch to get populated data
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+    }
+  };
+
+  const removeFromCart = async (itemId) => {
+    if (!isLoggedIn) return;
+    try {
+      await makeAPICall(ENDPOINTS.CART.REMOVE(itemId), { method: "DELETE" });
+      await fetchWishlistAndCart(); // Refetch to get populated data
+    } catch (error) {
+      console.error("Failed to remove from cart:", error);
+    }
   };
 
   const login = (token, userData = null) => {
@@ -70,12 +133,11 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    localStorage.removeItem("fakeToken");
     setToken(null);
     setUser(null);
     setIsLoggedIn(false);
-    setWishlistCount(0);
-    setCollectionCount(0);
+    setWishlist([]);
+    setCart([]);
   };
 
   const updateUser = (userData) => {
@@ -84,19 +146,25 @@ export const AuthProvider = ({ children }) => {
   };
   
   return (
-    <AuthContext.Provider value={{
-      isLoggedIn,
-      login,
-      logout,
-      token,
-      user,
-      updateUser,
-      wishlistCount,
-      collectionCount,
-      updateWishlistCount,
-      updateCollectionCount,
-      isInitialized
-    }}>
+    <AuthContext.Provider
+      value={{
+        isLoggedIn,
+        login,
+        logout,
+        token,
+        user,
+        updateUser,
+        wishlist,
+        cart,
+        toggleWishlist,
+        addToCart,
+        removeFromCart,
+        fetchWishlistAndCart,
+        wishlistCount: wishlist.length,
+        collectionCount: cart.length,
+        isInitialized,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

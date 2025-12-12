@@ -20,8 +20,11 @@ const ItemSchema = new mongoose.Schema({
   // Pricing
   pricePerDay: Number,
   securityDeposit: Number,
-  deliveryAvailable: { type: Boolean, default: false },
-  deliveryFee: Number,
+  deliveryOptions: {
+    offersDelivery: { type: Boolean, default: false },
+    deliveryFee: { type: Number, default: 0 },
+    offersPickup: { type: Boolean, default: true },
+  },
   
   // Condition and availability
   condition: String,
@@ -63,4 +66,4 @@ const ItemSchema = new mongoose.Schema({
 ItemSchema.index({ title: "text", description: "text" });
 ItemSchema.index({ owner: 1 });
 
-module.exports = mongoose.model("Item", ItemSchema);
+module.exports = mongoose.models.Item || mongoose.model("Item", ItemSchema);

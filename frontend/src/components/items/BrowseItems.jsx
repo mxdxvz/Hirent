@@ -2,133 +2,60 @@ import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, Eye, ShoppingBag, Check, MapPin } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
-
-// Helper function to fetch updated count from backend
-const fetchWishlistCount = async (token) => {
-  try {
-    const response = await fetch('http://localhost:5000/api/wishlist/count', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await response.json();
-    return data.count || 0;
-  } catch (error) {
-    console.error('Error fetching wishlist count:', error);
-    return 0;
-  }
-};
-
-const fetchCollectionCount = async (token) => {
-  try {
-    const response = await fetch('http://localhost:5000/api/collection/count', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await response.json();
-    return data.count || 0;
-  } catch (error) {
-    console.error('Error fetching collection count:', error);
-    return 0;
-  }
-};
+import { ENDPOINTS, makeAPICall } from "../../config/api";
 
 const BrowseItems = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, updateWishlistCount, updateCollectionCount } = useContext(AuthContext);
+  const { isLoggedIn, wishlist, toggleWishlist, addToCart, cart } = useContext(AuthContext);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [wishlist, setWishlist] = useState([]);
-  const [collection, setCollection] = useState([]);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [justAdded, setJustAdded] = useState([]);
 
-  const items = [
-    { id: 1, name: "Gucci duffle bag", price: "₱350/day", originalPrice: "₱1160", rating: 4, reviews: 50, image: "/assets/items/gucci_duffle_bag.png", badge: "-35%", badgeColor: "#7A1CA9", location: "Cebu" },
-    { id: 3, name: "MacBook Pro", price: "₱450/day", rating: 4.8, reviews: 49, image: "/assets/items/macbook.png", badge: "-10%", badgeColor: "#7A1CA9", location: "Quezon City" },
-    { id: 4, name: "Nikon DSLR", price: "₱550/day", rating: 4.5, reviews: 5, image: "/assets/items/camera.png", badge: null, location: "Naga City, Camarines Sur" },
-    { id: 5, name: "Electric Bike", price: "₱700/day", rating: 3.5, reviews: 3, image: "/assets/items/bike.png", badge: null, location: "Davao City, Davao del Sur" },
-    { id: 6, name: "Drill Set", price: "₱120/day", rating: 4.0, reviews: 3, image: "/assets/items/drill.png", badge: null, location: "Baguio City, Benguet" },
-    { id: 7, name: "DJI Mini Drone", price: "₱500/day", rating: 4.7, reviews: 6, image: "/assets/items/drone.png", badge: null, location: "Iriga City, Camarines Sur" },
-    { id: 8, name: "Yamaha Keyboard", price: "₱200/day", rating: 4.2, reviews: 5, image: "/assets/items/keyboard.png", badge: null, location: "Cagayan de Oro City, Misamis Oriental" },
-    { id: 9, name: "Projector Set", price: "₱300/day", rating: 4.3, reviews: 8, image: "/assets/items/projector.png", badge: null, location: "Tacloban City, Leyte" },
-    { id: 10, name: "Camping Tent", price: "₱100/day", rating: 4.1, reviews: 2, image: "/assets/items/tent.png", badge: null, location: "Tagaytay City, Cavite" },
-  ];
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const data = await makeAPICall(ENDPOINTS.ITEMS.GET_ALL);
+        setItems(Array.isArray(data) ? data : (data?.items || []));
+      } catch (error) {
+        console.error('Error fetching items:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchItems();
+  }, []);
 
   const itemsPerPage = 4;
   const maxIndex = Math.max(0, items.length - itemsPerPage);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev < maxIndex ? prev + 1 : 0));
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [maxIndex]);
+    if (items.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prev) => (prev < maxIndex ? prev + 1 : 0));
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [maxIndex, items.length]);
 
-  const toggleWishlist = async (id) => {
+  const handleToggleWishlist = (itemId) => {
     if (!isLoggedIn) {
       navigate('/login');
       return;
     }
-
-    try {
-      const token = localStorage.getItem('token');
-      const method = wishlist.includes(id) ? 'remove' : 'add';
-      const response = await fetch(`http://localhost:5000/api/wishlist/${method}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ itemId: id.toString() })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setWishlist((prevWishlist) => {
-          const updated = prevWishlist.includes(id)
-            ? prevWishlist.filter((i) => i !== id)
-            : [...prevWishlist, id];
-          return updated;
-        });
-        // Update the wishlist count in navbar with the count from response
-        updateWishlistCount(data.count);
-      }
-    } catch (error) {
-      console.error('Error toggling wishlist:', error);
-    }
+    toggleWishlist(itemId);
   };
 
-  const handleAddToCollection = async (item) => {
+  const handleAddToCollection = (item) => {
     if (!isLoggedIn) {
       navigate('/login');
       return;
     }
-
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/collection/add`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ itemId: item.id.toString() })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCollection((prevCollection) => {
-          if (!prevCollection.includes(item.id)) {
-            return [...prevCollection, item.id];
-          }
-          return prevCollection;
-        });
-        // Update the collection count in navbar with the count from response
-        updateCollectionCount(data.count);
-      }
-    } catch (error) {
-      console.error('Error adding to collection:', error);
-    }
-    
-    if (!justAdded.includes(item.id)) {
-      setJustAdded((prev) => [...prev, item.id]);
-      setTimeout(() => setJustAdded((prev) => prev.filter((id) => id !== item.id)), 2000);
+    addToCart(item, 1);
+    if (!justAdded.includes(item._id)) {
+      setJustAdded((prev) => [...prev, item._id]);
+      setTimeout(() => setJustAdded((prev) => prev.filter((id) => id !== item._id)), 2000);
     }
   };
 
@@ -153,7 +80,7 @@ const BrowseItems = () => {
 
               return (
                 <div
-                  key={item.id}
+                  key={item._id}
                   className={`rounded-2xl shadow-md bg-white  text-purple-900   p-3 flex-shrink-0 transition-all duration-500 ${isCenter ? "scale-100 blur-0 opacity-100" : "scale-95 blur-sm opacity-50"}`}
                   style={{ width: `calc(25% - 18px)` }}
                 >
@@ -172,14 +99,14 @@ const BrowseItems = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
-                          toggleWishlist(item.id);
+                          handleToggleWishlist(item._id);
                         }} 
                         className="bg-white text-purple-900 rounded-full shadow p-1 hover:bg-gray-200 transition"
                       >
                         <Heart
                           size={18}
                           strokeWidth={1.5}
-                          className={`${wishlist.includes(item.id) ? "fill-[#ec0b0b] stroke-[#ec0b0b]" : "stroke-[#af50df]"}`}
+                          className={`transition-colors duration-200 ${wishlist.some((i) => i._id === item._id) ? "fill-[#ec0b0b] stroke-[#ec0b0b]" : "stroke-[#af50df]"}`}
                         />
                       </button>
                       <button className="bg-white text-purple-900 rounded-full shadow p-1 hover:bg-gray-200 transition">
@@ -187,29 +114,29 @@ const BrowseItems = () => {
                       </button>
                     </div>
 
-                    <div className="relative w-full h-full flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => navigate(`/items/${item.id}`)}>
+                    <div className="relative w-full h-full flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => navigate(`/items/${item._id}`)}>
                       <img
-                        src={item.image}
-                        alt={item.name}
+                        src={item.images[0]}
+                        alt={item.title}
                         className="absolute w-[95%] h-[95%] object-contain transition-transform duration-300 hover:scale-110"
                       />
                     </div>
 
                     <div className="flex w-full rounded-b-2xl overflow-hidden mt-auto">
                       <button
-                        onClick={() => navigate(`/booking/${item.id}`)}
+                        onClick={() => navigate(`/booking/${item._id}`)}
                         className="flex-[0.9] bg-[#7A1CA9] hover:bg-[#681690] text-white text-[12.5px] font-medium py-2.5 flex justify-center items-center transition rounded-bl-2xl"
                       >
                         Book Item
                       </button>
                       <button
                         onClick={() => handleAddToCollection(item)}
-                        className={`flex-[1] border border-[#7A1CA9]  rounded-br-2xl font-medium py-2.5 flex justify-center items-center gap-1 transition-all duration-300 text-[12.5px] ${justAdded.includes(item.id)
+                        className={`flex-[1] border border-[#7A1CA9]  rounded-br-2xl font-medium py-2.5 flex justify-center items-center gap-1 transition-all duration-300 text-[12.5px] ${justAdded.includes(item._id)
                             ? "bg-green-500 border-green-500 text-white hover:bg-green-600 hover:border-green-600"
                             : "text-[#7A1CA9] hover:bg-purple-100"
                           }`}
                       >
-                        {justAdded.includes(item.id) ? (
+                        {justAdded.includes(item._id) ? (
                           <>
                             <Check size={16} className="text-white" /> Added!
                           </>
@@ -223,7 +150,7 @@ const BrowseItems = () => {
                   </div>
 
                   <div className="text-left mt-3">
-                    <p className="text-purple-900 font-semibold text-sm mt-2 mb-1">{item.name}</p>
+                    <p className="text-purple-900 font-semibold text-sm mt-2 mb-1">{item.title}</p>
                     <p className="text-[#7A1CA9] font-bold text-sm mb-1">{item.price}</p>
 
                     {item.rating && (

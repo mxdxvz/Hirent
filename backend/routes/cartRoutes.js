@@ -12,7 +12,7 @@ const {
 router.post('/add', auth, addToCart);
 
 // /api/cart/remove/:itemId
-router.delete('/remove/:itemId', auth, removeItemFromCart);
+router.delete('/:itemId', auth, removeItemFromCart);
 
 // /api/cart/update
 router.put('/update', auth, updateCartItem);

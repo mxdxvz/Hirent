@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/userController");
 const authMiddleware = require("../middleware/authMiddleware");
+const adminMiddleware = require("../middleware/adminMiddleware");
 const validationHandler = require("../utils/validators/validationHandler");
 const {
   updateProfileValidator,
@@ -38,7 +39,7 @@ router.get("/addresses", authMiddleware, userController.getAddresses);
 router.get("/payment-methods", authMiddleware, userController.getPaymentMethods);
 
 // Public routes - MUST come AFTER protected routes
-router.get("/", userController.getAllUsers);
-router.post("/", userController.createUser);
+router.get("/", authMiddleware, adminMiddleware, userController.getAllUsers);
+router.post("/", authMiddleware, adminMiddleware, userController.createUser);
 
 module.exports = router;

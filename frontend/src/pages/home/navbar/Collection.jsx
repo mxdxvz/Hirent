@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
 import emptycollection from "../../../assets/empty-collection.png";
@@ -11,17 +11,16 @@ import CollectionCard from "../../../components/cards/CollectionItemCard";
 import CollectionSummary from "../../../components/cards/CollectionSummary";
 
 import { ENDPOINTS, makeAPICall } from "../../../config/api";
+import { AuthContext } from "../../../context/AuthContext";
 
 const CollectionPage = () => {
   const navigate = useNavigate();
+  const { cart: collectionItems, removeFromCart, fetchWishlistAndCart } = useContext(AuthContext);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedCancelId, setSelectedCancelId] = useState(null);
-
-  const [collectionItems, setCollectionItems] = useState([]);
   const [filter, setFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("latest");
 
-  // Fetch collection items from API
   useEffect(() => {
     document.title = "Hirent — Collection";
     return () => {
@@ -29,27 +28,8 @@ const CollectionPage = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const fetchCollection = async () => {
-      try {
-        const data = await makeAPICall(ENDPOINTS.CART.GET); // Assuming CART.GET returns user's collection
-        if (data && Array.isArray(data.items)) {
-          setCollectionItems(data.items);
-        }
-      } catch (error) {
-        console.error("Failed to fetch collection:", error);
-      }
-    };
-    fetchCollection();
-  }, []);
-
-  const handleRemoveItem = async (id) => {
-    try {
-      await makeAPICall(ENDPOINTS.CART.REMOVE(id), { method: "DELETE" });
-      setCollectionItems((prev) => prev.filter((item) => item.id !== id));
-    } catch (error) {
-      console.error("Failed to remove item:", error);
-    }
+  const handleRemoveItem = (id) => {
+    removeFromCart(id);
   };
 
   const calculateItemTotal = (item) => {
@@ -80,15 +60,7 @@ const CollectionPage = () => {
   const confirmCancelBooking = async () => {
     try {
       await makeAPICall(ENDPOINTS.BOOKINGS.CANCEL(selectedCancelId), { method: "POST" });
-
-      setCollectionItems((prev) =>
-        prev.map((item) =>
-          item.id === selectedCancelId
-            ? { ...item, status: "not booked", bookedFrom: null, bookedTo: null }
-            : item
-        )
-      );
-
+      fetchWishlistAndCart(); // Refetch data to update UI
       setShowCancelModal(false);
       setSelectedCancelId(null);
       alert("Booking canceled successfully.");

@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/authMiddleware');
-const { getPendingNotifications, sendNotification } = require('../controllers/notificationController');
+const authMiddleware = require('../middleware/authMiddleware');
+const notificationController = require('../controllers/notificationController');
 
-// Get all bookings with pending notifications (admin)
-router.get('/pending', auth.protect, getPendingNotifications);
+// Get all notifications for a user
+router.get('/:userId', authMiddleware, notificationController.getUserNotifications);
 
-// Send notification for a booking
-router.post('/:id/send', auth.protect, sendNotification);
+// Mark a notification as read
+router.patch('/:notificationId/read', authMiddleware, notificationController.markNotificationAsRead);
 
 module.exports = router;

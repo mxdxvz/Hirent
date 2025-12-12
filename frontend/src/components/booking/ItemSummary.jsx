@@ -11,7 +11,7 @@ const ItemSummary = ({ product, days, coupon }) => {
         {/* Product Image */}
         <div className="w-40 h-40 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
           <img
-            src={product.image || product.img || 'https://via.placeholder.com/160'}
+            src={product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/160'}
             alt={product.name}
             className="w-full h-full object-contain"
             onError={(e) => { e.target.src = 'https://via.placeholder.com/160'; }}
@@ -21,18 +21,16 @@ const ItemSummary = ({ product, days, coupon }) => {
         {/* Right Content */}
         <div className="flex-1 ml-4">
           {/* Product Title */}
-          <h3 className="font-semibold text-lg mb-3">{product.name}</h3>
+          <h3 className="font-semibold text-lg mb-3">{product.title}</h3>
 
           {/* Owner */}
           {product.owner && (
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-9 h-9 bg-[#7A1CA9] rounded-full flex items-center justify-center text-white text-[15px] font-semibold">
-                {product.owner.charAt(0)}
-              </div>
+              <img src={product.owner.avatar || 'https://via.placeholder.com/150'} alt={product.owner.name} className="w-9 h-9 rounded-full object-cover" />
               <div className="text-sm text-gray-600">
                 <span className="font-light text-gray-500 mb-2">Listed by</span>
                 <br />
-                <span className=" text-purple-900 ">{product.owner}</span>
+                <span className=" text-purple-900 ">{product.owner.name}</span>
               </div>
             </div>
           )}

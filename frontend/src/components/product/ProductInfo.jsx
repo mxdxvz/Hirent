@@ -421,7 +421,7 @@ const ProductInfo = ({ product, handleAddToCollection, handleToggleWishlist, wis
           Add to Collection
         </button>
 
-        <button onClick={() => handleToggleWishlist(product._id)} className={`p-2 border rounded-lg transition-colors ${wishlist.includes(product._id) ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 hover:border-purple-600 hover:bg-purple-50'}`}>
+        <button onClick={() => handleToggleWishlist(product._id)} className={`p-2 border rounded-lg transition-colors ${wishlist.some((w) => w._id === product._id) ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 hover:border-purple-600 hover:bg-purple-50'}`}>
           <Heart className="w-4 h-4" />
         </button>
       </div>

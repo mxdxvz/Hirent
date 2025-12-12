@@ -1,54 +1,47 @@
-const Booking = require('../models/Bookings');
-const nodemailer = require('nodemailer');
+const Notification = require('../models/Notification');
 
-// Example email sender setup
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-});
-
-// ===============================
-// GET Pending Notifications
-// ===============================
-exports.getPendingNotifications = async (req, res, next) => {
+// This function is for internal use by other controllers
+exports.createNotification = async (data) => {
   try {
-    const bookings = await Booking.find({
-      status: { $in: ['approved', 'cancelled'] },
-      notificationSent: false
-    }).populate('renter', 'name email')
-      .populate('item', 'title');
-
-    res.json({ success: true, bookings });
-  } catch (err) {
-    next(err);
+    const notification = new Notification(data);
+    await notification.save();
+    // In a real-world app, you might also push this to a WebSocket service
+    console.log('Notification created:', notification);
+    return notification;
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    throw error;
   }
 };
 
-// ===============================
-// SEND Notification
-// ===============================
-exports.sendNotification = async (req, res, next) => {
+exports.getUserNotifications = async (req, res) => {
   try {
-    const bookingId = req.params.id;
-    const booking = await Booking.findById(bookingId).populate('renter', 'name email').populate('item', 'title');
-
-    if (!booking) return res.status(404).json({ message: 'Booking not found' });
-    if (booking.notificationSent) return res.status(400).json({ message: 'Notification already sent' });
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: booking.renter.email,
-      subject: `Booking ${booking.status.toUpperCase()}`,
-      text: `Hi ${booking.renter.name}, your booking for "${booking.item.title}" has been ${booking.status}.`
-    };
-
-    await transporter.sendMail(mailOptions);
-
-    booking.notificationSent = true;
-    await booking.save();
-
-    res.json({ success: true, message: 'Notification sent', booking });
+    const notifications = await Notification.find({ recipientId: req.params.userId })
+      .populate('senderId', 'name profileImage')
+      .populate('bookingId', 'status')
+      .sort({ createdAt: -1 });
+    res.json({ success: true, data: notifications });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, msg: 'Error fetching notifications', message: err.message });
+  }
+};
+
+exports.markNotificationAsRead = async (req, res) => {
+  try {
+    const notification = await Notification.findById(req.params.notificationId);
+    if (!notification) {
+      return res.status(404).json({ success: false, msg: 'Notification not found' });
+    }
+
+    // Security check: ensure the user is the recipient
+    if (notification.recipientId.toString() !== req.user.userId) {
+      return res.status(403).json({ success: false, msg: 'Not authorized to update this notification' });
+    }
+
+    notification.isRead = true;
+    await notification.save();
+    res.json({ success: true, message: 'Notification marked as read', data: notification });
+  } catch (err) {
+    res.status(500).json({ success: false, msg: 'Error updating notification', message: err.message });
   }
 };
